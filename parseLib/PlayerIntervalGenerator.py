@@ -1,26 +1,26 @@
 import pandas as pd
 
 class PlayerIntervalGenerator:
-    def __init__(self, hurtEvents: list, parsedDf: pd.DataFrame, playerSteamId: int, label: bool) -> None:
+    def __init__(self, hurtEvents: list, playerSteamId: int) -> None:
         self.delta = 128
-        self.separation_marker: pd.DataFrame = pd.DataFrame([[]])
         self.hurtEvents = hurtEvents
-        self.parsedDf = parsedDf
         self.playerSteamId = playerSteamId
-        self.label = label
+        self.hurtTicks = dict()
+        self.hurtIntervals = []
 
 
-    def generateIntervals(self) -> list:
+    def generateIntervals(self) -> None:
         intervals: list = []
         for event in self.hurtEvents:
             if event['attacker_steamid'] != self.playerSteamId:
                 continue
+            self.hurtTicks[event['tick']] = event
             interval = [event['tick'] - self.delta, event['tick']]
             intervals.append(interval)
 
         if(len(intervals) == 0):
             # No hurt event for this player registered
-            return []
+            return
         
         intervals = sorted(intervals)
         mergedIntervals = []
@@ -35,19 +35,6 @@ class PlayerIntervalGenerator:
                 end = max(end, intervals[i][1])
         mergedIntervals.append([start, end])
 
-        mergedIntervalsFilled: list = []
-        for interval in mergedIntervals:
-            tmpDf = self.getIntervalData(interval)
-            mergedIntervalsFilled.append(tmpDf)
+        self.hurtIntervals = mergedIntervals
 
-        return mergedIntervalsFilled
-    
-
-    def getIntervalData(self, interval: list) -> pd.DataFrame:
-        requiredTicks = list(range(interval[0], interval[1] + 1))
-        intervalDf: pd.DataFrame = self.parsedDf.loc[(self.parsedDf['tick'].isin(requiredTicks)) & \
-                                                (self.parsedDf['steamid'] == self.playerSteamId)]\
-                                                .copy()
-        intervalDf = pd.concat([intervalDf, self.separation_marker], ignore_index=True)
-        intervalDf['label'] = self.label
-        return intervalDf
+        return
