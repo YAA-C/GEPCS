@@ -52,13 +52,14 @@ class SingleFileParser:
             for singleInterval in tickIntervals:
                 intervalStart = singleInterval[0]
                 intervalEnd = singleInterval[1]
-                
+
                 for tick in range(intervalStart, intervalEnd + 1):
                     rowData = [""] * totalColumns
                     playerTickData = self.getByIndex(self.parser.parsedDf, (tick, player))
                     if(len(playerTickData) == 0):
                         # Skipped tick
                         continue
+                    
                     playerTickData = playerTickData.iloc[0, :]
                     X = playerTickData['X']
                     Y = playerTickData['Y']
