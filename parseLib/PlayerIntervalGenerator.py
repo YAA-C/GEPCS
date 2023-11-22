@@ -1,9 +1,10 @@
 import pandas as pd
+from .Filters import Filters
 
 class PlayerIntervalGenerator:
     def __init__(self, hurtEvents: list, playerSteamId: int) -> None:
         self.delta = 128
-        self.hurtEvents = hurtEvents
+        self.hurtEvents = Filters().filterWeaponHurtEvents(hurtEvents)
         self.playerSteamId = playerSteamId
         self.hurtTicks = dict()
         self.hurtIntervals = []
