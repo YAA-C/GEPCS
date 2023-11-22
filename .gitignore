@@ -4,5 +4,8 @@
 __pycache__/
 *.pyc
 
-DemoFiles/*
-!DemoFiles/.gitkeep
+DemoFiles/csv/*
+DemoFiles/Demos/*
+
+!DemoFiles/csv/.gitkeep
+!DemoFiles/Demos/.gitkeep
