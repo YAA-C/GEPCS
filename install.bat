@@ -18,7 +18,7 @@ echo Checking and downloading dependencies
 pip install -q -r requirements.txt
 
 if not exist "DemoFiles\test.dem" (
-    gdown "https://drive.google.com/uc?export=download&id=148PlhfTKwk4mI-rOxiDuCAPlNJLY0h5J" -O "./DemoFiles/test.dem"
+    gdown "https://drive.google.com/uc?export=download&id=148PlhfTKwk4mI-rOxiDuCAPlNJLY0h5J" -O "./DemoFiles/Demos/test.dem"
 )
 
 call deactivate

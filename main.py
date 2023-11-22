@@ -20,5 +20,5 @@ def startMp(filePaths):
 
 
 if __name__ == "__main__":
-    files = os.listdir("./DemoFiles/Demos/")
+    files = [file for file in os.listdir("./DemoFiles/Demos/") if file[-4:] == '.dem']
     startMp(files)

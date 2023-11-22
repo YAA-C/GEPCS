@@ -5,7 +5,6 @@ from parseLib.CustomDemoParser import CustomDemoParser
 from parseLib.PlayerIntervalGenerator import PlayerIntervalGenerator
 
 class SingleFileParser:
-
     def __init__(self, fileName = "test.dem"):
         dirname = os.path.dirname(__file__)
         self.fileName = fileName
