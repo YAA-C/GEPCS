@@ -17,8 +17,18 @@ call .\venv\Scripts\activate
 echo Checking and downloading dependencies
 pip install -q -r requirements.txt
 
-if not exist "DemoFiles\test.dem" (
-    gdown "https://drive.google.com/uc?export=download&id=148PlhfTKwk4mI-rOxiDuCAPlNJLY0h5J" -O "./DemoFiles/test.dem"
+echo Checking if Rust is installed
+where rustc > nul 2>&1
+if %errorlevel% neq 0 (
+    echo Install Rust...
+    exit
+)
+
+echo compile and build demoparserLib for current system
+maturin develop --manifest-path=.\demoparserLib\Cargo.toml
+
+if not exist "DemoFiles\Demos\test.dem" (
+    gdown "https://drive.google.com/uc?export=download&id=148PlhfTKwk4mI-rOxiDuCAPlNJLY0h5J" -O "./DemoFiles/Demos/test.dem"
 )
 
 call deactivate
