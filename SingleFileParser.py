@@ -33,7 +33,7 @@ class SingleFileParser:
     def start(self):
         steamIds = self.parser.players
         intervalGeneratorObjs = dict()
-
+    
         label = False
         for player in steamIds:
             intervalGenerator = PlayerIntervalGenerator(self.parser.hurtEvents, player)
@@ -42,6 +42,8 @@ class SingleFileParser:
 
         dfRows = []
         totalColumns = 35
+        completedCnt = 0
+
         for player in intervalGeneratorObjs.keys():
             # print(player)
             tickIntervals = intervalGeneratorObjs[player].hurtIntervals
@@ -51,7 +53,7 @@ class SingleFileParser:
             for singleInterval in tickIntervals:
                 intervalStart = singleInterval[0]
                 intervalEnd = singleInterval[1]
-
+                completedCnt += 1
                 for tick in range(intervalStart, intervalEnd + 1):
                     rowData = [""] * totalColumns
                     playerTickData = self.getByIndex(self.parser.parsedDf, (tick, player))
@@ -114,6 +116,9 @@ class SingleFileParser:
                 dfRows.append([""] * totalColumns)
 
 
+        with open("logs.txt", '+a') as f:
+            f.write(f"{completedCnt}\n")
+            
         # print("Completed parsing...")
         # print(len(hurtEventsMerged))
         columns = ["currentTick", "X", "Y", "Z", "velocityX", "velocityY", "velocityZ", "yaw", "pitch", "isCrouched", "isJumping", "isFiring", "dmgDone", "noOfShot", "distToTarget", "targetX", "targetY", "targetZ", "targetVelocityX", "targetVelocityY", "targetVelocityZ", "tagetYaw", "targetPitch", "targetHitArea", "penetrated", "weaponUsed", "accuracy", "targetBlind", "targetInSmoke", "targetReturnedDmg", "utilityDmgDone", "supportUtilityUsed", "kdr", "audioClue", "Label"]

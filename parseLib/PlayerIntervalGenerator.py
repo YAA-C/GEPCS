@@ -4,7 +4,7 @@ from .Filters import Filters
 class PlayerIntervalGenerator:
     def __init__(self, hurtEvents: list, playerSteamId: int) -> None:
         self.delta = 128
-        self.hurtEvents = Filters().filterWeaponHurtEvents(hurtEvents)
+        self.hurtEvents = Filters().filterPlayerHurtEvents(hurtEvents, playerSteamId)
         self.playerSteamId = playerSteamId
         self.hurtTicks = dict()
         self.hurtIntervals = []
@@ -13,8 +13,6 @@ class PlayerIntervalGenerator:
     def generateIntervals(self) -> None:
         intervals: list = []
         for event in self.hurtEvents:
-            if event['attacker_steamid'] != self.playerSteamId:
-                continue
             self.hurtTicks[event['tick']] = event
             interval = [event['tick'] - self.delta, event['tick']]
             intervals.append(interval)
