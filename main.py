@@ -9,7 +9,7 @@ def startFunc(filePath):
         singleFileParser = SingleFileParser(filePath)
         singleFileParser.start()
     except Exception as e:
-        pass
+        print(e)
     else:
         print(f"Completed - {filePath}")
 
