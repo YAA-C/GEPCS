@@ -10,4 +10,4 @@ DemoFiles/Demos/*
 !DemoFiles/csv/.gitkeep
 !DemoFiles/Demos/.gitkeep
 
-logs.txt
+/logs/logs*.txt

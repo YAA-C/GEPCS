@@ -11,5 +11,9 @@ class Filters:
         return [event for event in hurtEvents if event['weapon'] == 'hegrenade']
 
 
-    def filterPlayerHurtEvents(self, hurtEvents: list, playerSteamId: int) -> list:
-        return [event for event in hurtEvents if event['attacker_steamid'] == playerSteamId]
+    def filterPlayerHurtEvents(self, hurtEvents: list, playerSteamId: int, targetSteamId: int) -> list:
+        return [event for event in hurtEvents if (event['attacker_steamid'] == playerSteamId and event['player_steamid'] == targetSteamId)]
+    
+    
+    def filterHumanPlayers(self, players: list):
+        return [player for player in players if (player > 76500000000000000 and player < 76600000000000000)]

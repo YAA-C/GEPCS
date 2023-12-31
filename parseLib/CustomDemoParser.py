@@ -33,14 +33,14 @@ class CustomDemoParser:
     
 
     def parsePlayerSteamIds(self) -> None:
-        self.players = self.parsedDf['steamid'].unique().tolist()
+        self.allPlayers = self.parsedDf['steamid'].unique().tolist()
         x = []
-        for i in self.players:
+        for i in self.allPlayers:
             tmp = self.parsedDf.loc[self.parsedDf['steamid'] == i]
             x.append({f'id_{i}': tmp.iloc[0, 12]})
         from pprint import pprint
         pprint(x)
-        self.players = [player for player in self.players if (player > 76500000000000000 and player < 76600000000000000)]
+        self.players = Filters().filterHumanPlayers(self.allPlayers)
         print("After filtering : ", self.players)
 
 
