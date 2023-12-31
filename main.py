@@ -1,6 +1,7 @@
 from SingleFileParser import SingleFileParser
 import multiprocessing
 import os
+import traceback
 
 
 def startFunc(filePath):
@@ -8,8 +9,8 @@ def startFunc(filePath):
     try:
         singleFileParser = SingleFileParser(filePath)
         singleFileParser.start()
-    except Exception as e:
-        print(e)
+    except Exception:
+        print(traceback.format_exc())
     else:
         print(f"Completed - {filePath}")
 
