@@ -10,18 +10,21 @@ def concatenate_csv_files(input_folder, output_file):
         print("No CSV files found in the input folder.")
         return
 
+    # Initialize an empty list to store DataFrames
+    dfs = []
+
     # Read the first CSV file to get the column names and dtypes
     first_csv = pd.read_csv(os.path.join(input_folder, csv_files[0]))
     columns = list(first_csv.columns)
     dtypes = first_csv.dtypes
 
-    # Create an empty DataFrame with the same column names and dtypes
-    result_df = pd.DataFrame(columns=columns).astype(dtypes)
-
     # Concatenate all CSV files
     for csv_file in csv_files:
         current_csv = pd.read_csv(os.path.join(input_folder, csv_file))
-        result_df = pd.concat([result_df, current_csv], ignore_index=True)
+        dfs.append(current_csv)
+
+    # Concatenate all DataFrames in the list
+    result_df = pd.concat(dfs, ignore_index=True)
 
     # Remove rows with all values empty (horizontal empty rows)
     result_df = result_df.dropna(how='all')
