@@ -1,7 +1,7 @@
 import pandas as pd
 from .Filters import Filters
 
-class PlayerIntervalGenerator:
+class MatchContext:
     def __init__(self, hurtEvents: list, playerSteamId: int, targetSteamId: int) -> None:
         self.delta = 128
         self.hurtEvents = Filters().filterPlayerHurtEvents(hurtEvents, playerSteamId, targetSteamId)
@@ -11,7 +11,7 @@ class PlayerIntervalGenerator:
         self.hurtIntervals = []
 
 
-    def generateIntervals(self) -> None:
+    def generatePlayerHurtIntervals(self) -> None:
         intervals: list = []
         for event in self.hurtEvents:
             self.hurtTicks[event['tick']] = event
@@ -36,5 +36,3 @@ class PlayerIntervalGenerator:
         mergedIntervals.append([start, end])
 
         self.hurtIntervals = mergedIntervals
-
-        return

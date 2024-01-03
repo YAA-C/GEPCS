@@ -1,16 +1,48 @@
 import pandas as pd
 from math import sqrt
-from .PlayerIntervalGenerator import PlayerIntervalGenerator
+from .MatchContext import MatchContext
 from .CustomDemoParser import CustomDemoParser
 
 
 class Fight:
+    features: list = [
+        "currentTick", 
+        "playerId",
+        "X", "Y", "Z",
+        "deltaX", "deltaY", "deltaZ",  
+        "yaw", "pitch", 
+        "deltaYaw", "deltaPitch",
+        "deltaAimArc",
+        "isFlashed",
+        "isCrouching",
+        "isJumping",
+        "utilityDmgDone", 
+        "supportUtilityUsed", 
+        "KDR", 
+        "isFiring",
+
+        "targetId",
+        "targetX", "targetY", "targetZ",
+        "targetDeltaX", "targetDeltaY", "targetDeltaZ",
+        "dmgDone", 
+        "distToTarget", 
+        "targetHitArea", 
+        "penetratedObject", 
+        "weaponUsed",
+        "weaponCategory",
+        "isScoping",
+        "isTargetBlind", 
+        "isTargetInSmoke", 
+        "targetReturnedDmg", 
+        "Label"
+    ]
+
     def __init__(
                 self, 
                 intervalStartTick: int, 
                 intervalEndTick: int, 
                 parser: CustomDemoParser, 
-                intervalGeneratorObj: PlayerIntervalGenerator, 
+                matchContextObj: MatchContext, 
                 playerSteamId: int,
                 targetSteamId: int,
                 label: bool,
@@ -19,35 +51,60 @@ class Fight:
         self.intervalStartTick: int = intervalStartTick
         self.intervalEndTick: int = intervalEndTick
         self.parser: CustomDemoParser = parser
-        self.intervalGeneratorObj: PlayerIntervalGenerator = intervalGeneratorObj
+        self.matchContextObj: MatchContext = matchContextObj
         self.playerSteamId: int = playerSteamId
         self.targetSteamId: int = targetSteamId
         self.label: bool = label
         self.dfRows: list = dfRows
-        self.columnLabels: list = ["currentTick", "X", "Y", "Z", "velocityX", "velocityY", "velocityZ", "yaw", "pitch", "utilityDmgDone", "supportUtilityUsed", "kdr", "isCrouched", "isJumping", "isFiring", "targetX", "targetY", "targetZ", "targetVelocityX", "targetVelocityY", "targetVelocityZ", "tagetYaw", "targetPitch", "dmgDone", "distToTarget", "targetHitArea", "penetrated", "weaponUsed", "targetBlind", "targetInSmoke", "targetReturnedDmg", "Label"]
         self.featureNameToIndex: dict = dict()
-        for i in range(len(self.columnLabels)):
-            self.featureNameToIndex[self.columnLabels[i]] = i
+        for i, featureName in enumerate(Fight.features):
+            self.featureNameToIndex[featureName] = i
+        self.minTick: int = -1
+        self.prevValueDict: dict = dict()
 
-
+    
     def getByIndex(self, df: pd.DataFrame, index: tuple[int]) -> pd.DataFrame:
         if index in df.index:
             return df.loc[index]
         return pd.DataFrame()
 
+    
+    def convertAngleToLinearDelta(self, circularAngle, angleLabel):
+        linearAngleDelta = 0
+        
+        if(angleLabel in self.prevValueDict):
+            distance = abs(circularAngle - self.prevValueDict[angleLabel])
+            circularDistance = 360 - distance
+            if(distance < circularDistance):
+                linearAngleDelta = circularAngle - self.prevValueDict[angleLabel]
+            else:
+                linearAngleDelta = circularDistance if (circularAngle < self.prevValueDict[angleLabel]) else -circularDistance
+        
+        self.prevValueDict[angleLabel] = circularAngle
+        return linearAngleDelta
+    
 
+    # TODO: Modify Z when player is crouching 
     def getPlayerLocation(self, playerTickData: pd.Series) -> tuple:
         X = playerTickData['X']
         Y = playerTickData['Y']
         Z = playerTickData['Z']
         return (X, Y, Z)
     
-    
-    def getPlayerVelocity(self, playerTickData: pd.Series) -> tuple:
-        velocityX = playerTickData['m_vecVelocity[0]']
-        velocityY = playerTickData['m_vecVelocity[1]']
-        velocityZ = playerTickData['m_vecVelocity[2]']
-        return (velocityX, velocityY, velocityZ)
+
+    def getLocationDeltas(self, playerTickData: pd.Series) -> tuple:
+        X, Y, Z = self.getPlayerLocation(playerTickData= playerTickData)
+        deltaX, deltaY, deltaZ = 0, 0, 0
+
+        if('prevX' in self.prevValueDict):
+            deltaX = X - self.prevValueDict['prevX']
+            deltaY = X - self.prevValueDict['prevX']
+            deltaZ = X - self.prevValueDict['prevX']
+        
+        self.prevValueDict['prevX'] = X
+        self.prevValueDict['prevY'] = Y
+        self.prevValueDict['prevZ'] = Z
+        return (deltaX, deltaY, deltaZ)
 
 
     def getPlayerViewAngles(self, playerTickData: pd.Series) -> tuple:
@@ -55,6 +112,13 @@ class Fight:
         pitch = playerTickData['m_angEyeAngles[0]']
         return (yaw, pitch)
     
+
+    def getViewAngleDeltas(self, playerTickData: pd.Series) -> tuple:
+        yaw, pitch = self.getPlayerViewAngles(playerTickData= playerTickData)
+        deltaYaw = self.convertAngleToLinearDelta(circularAngle= yaw, angleLabel= 'prevYaw')
+        deltaPitch = self.convertAngleToLinearDelta(circularAngle= pitch, angleLabel= 'prevPitch')
+        return (deltaYaw, deltaPitch)
+
 
     def getPlayerCrouched(self, playerTickData: pd.Series) -> bool:
         return playerTickData['m_bDucked'] | playerTickData['m_bDucking']
@@ -134,41 +198,48 @@ class Fight:
 
 
     def buildFightTick(self, tick: int) -> list:
-        rowData = [""] * len(self.columnLabels)
+        rowData = [""] * len(Fight.features)
         playerTickData = self.getByIndex(self.parser.parsedDf, (tick, self.playerSteamId))
         if(len(playerTickData) == 0):
             return list()   # Skipped tick
         else:
+            if self.minTick == -1:
+                self.minTick = tick
             playerTickData: pd.Series = playerTickData.iloc[0, :]
 
+        currentTick = tick - self.minTick
         X, Y, Z = self.getPlayerLocation(playerTickData= playerTickData)
-        velocityX, velocityY, velocityZ = self.getPlayerVelocity(playerTickData= playerTickData)
+        deltaX, deltaY, deltaZ = self.getLocationDeltas(playerTickData= playerTickData)
         yaw, pitch = self.getPlayerViewAngles(playerTickData= playerTickData)
+        deltaYaw, deltaPitch = self.getViewAngleDeltas(playerTickData= playerTickData)
         utilityDmgDone = self.getUtilityDamageDone()
         supportUtilityUsed = self.getSupportUtilityUsed()
         kdr = self.getPlayerKDR()
         isCrouched = self.getPlayerCrouched(playerTickData= playerTickData)
         isJumping = self.getPlayerJumped(playerTickData= playerTickData)
         isFiring = self.getPlayerFiring(playerTickData= playerTickData)
-
-        self.setFeatures(rowData= rowData, featureName= "currentTick", featureValue= tick)
+        
+        self.setFeatures(rowData= rowData, featureName= "currentTick", featureValue= currentTick)
+        self.setFeatures(rowData= rowData, featureName= "playerId", featureValue= self.playerSteamId)
         self.setFeatures(rowData= rowData, featureName= ("X", "Y", "Z"), featureValue= (X, Y, Z))
-        self.setFeatures(rowData= rowData, featureName= ("velocityX", "velocityY", "velocityZ"), featureValue= (velocityX, velocityY, velocityZ))
+        self.setFeatures(rowData= rowData, featureName= ("deltaX", "deltaY", "deltaZ"), featureValue= (deltaX, deltaY, deltaZ))
         self.setFeatures(rowData= rowData, featureName= ("yaw", "pitch"), featureValue= (yaw, pitch))
+        self.setFeatures(rowData= rowData, featureName= ("deltaYaw", "deltaPitch"), featureValue= (deltaYaw, deltaPitch))
+        self.setFeatures(rowData= rowData, featureName= "deltaAimArc", featureValue= 0)
+        self.setFeatures(rowData= rowData, featureName= "isFlashed", featureValue= 0)
+        self.setFeatures(rowData= rowData, featureName= "isCrouching", featureValue= isCrouched)
+        self.setFeatures(rowData= rowData, featureName= "isJumping", featureValue= isJumping)
         self.setFeatures(rowData= rowData, featureName= "utilityDmgDone", featureValue= utilityDmgDone)
         self.setFeatures(rowData= rowData, featureName= "supportUtilityUsed", featureValue= supportUtilityUsed)
-        self.setFeatures(rowData= rowData, featureName= "kdr", featureValue= kdr)
-        self.setFeatures(rowData= rowData, featureName= "isCrouched", featureValue= isCrouched)
-        self.setFeatures(rowData= rowData, featureName= "isJumping", featureValue= isJumping)
+        self.setFeatures(rowData= rowData, featureName= "KDR", featureValue= kdr)
         self.setFeatures(rowData= rowData, featureName= "isFiring", featureValue= isFiring)
 
-        if(tick in self.intervalGeneratorObj.hurtTicks):
-            targetHurtEvent = self.intervalGeneratorObj.hurtTicks[tick]
+        if(tick in self.matchContextObj.hurtTicks):
+            targetHurtEvent = self.matchContextObj.hurtTicks[tick]
             targetTickData = self.getByIndex(self.parser.parsedDf, (tick, targetHurtEvent["player_steamid"])).iloc[0, :] 
             
             targetX, targetY, targetZ = self.getPlayerLocation(playerTickData= targetTickData)
-            targetVelocityX, targetVelocityY, targetVelocityZ = self.getPlayerVelocity(playerTickData= targetTickData)
-            tagetYaw, targetPitch = self.getPlayerViewAngles(playerTickData= targetTickData)
+            targetDeltaX, targetDeltaY, targetDeltaZ = self.getLocationDeltas(playerTickData= targetTickData)
             dmgDone = self.getTargetTotalDamage(targetHurtEvent= targetHurtEvent)
             distToTarget = self.getDistanceToTarget([targetX, targetY, targetZ], [X, Y, Z])
             targetHitArea = self.getTargetHitSpot(targetHurtEvent= targetHurtEvent)
@@ -178,19 +249,21 @@ class Fight:
             targetInSmoke = self.getSmokeInVision()
             targetReturnedDmg = self.getReturnedDamge()
 
+            self.setFeatures(rowData= rowData, featureName= "targetId", featureValue= self.targetSteamId)
             self.setFeatures(rowData= rowData, featureName= ("targetX", "targetY", "targetZ"), featureValue= (targetX, targetY, targetZ))
-            self.setFeatures(rowData= rowData, featureName= ("targetVelocityX", "targetVelocityY", "targetVelocityZ"), featureValue= (targetVelocityX, targetVelocityY, targetVelocityZ))
-            self.setFeatures(rowData= rowData, featureName= ("tagetYaw", "targetPitch"), featureValue= (tagetYaw, targetPitch))
+            self.setFeatures(rowData= rowData, featureName= ("targetDeltaX", "targetDeltaY", "targetDeltaZ"), featureValue= (targetDeltaX, targetDeltaY, targetDeltaZ))
             self.setFeatures(rowData= rowData, featureName= "dmgDone", featureValue= dmgDone)
             self.setFeatures(rowData= rowData, featureName= "distToTarget", featureValue= distToTarget)
             self.setFeatures(rowData= rowData, featureName= "targetHitArea", featureValue= targetHitArea)
-            self.setFeatures(rowData= rowData, featureName= "penetrated", featureValue= penetrated)
+            self.setFeatures(rowData= rowData, featureName= "penetratedObject", featureValue= penetrated)
             self.setFeatures(rowData= rowData, featureName= "weaponUsed", featureValue= weaponUsed)
-            self.setFeatures(rowData= rowData, featureName= "targetBlind", featureValue= targetBlind)
-            self.setFeatures(rowData= rowData, featureName= "targetInSmoke", featureValue= targetInSmoke)
+            self.setFeatures(rowData= rowData, featureName= "weaponCategory", featureValue= 0)
+            self.setFeatures(rowData= rowData, featureName= "isScoping", featureValue= 0)
+            self.setFeatures(rowData= rowData, featureName= "isTargetBlind", featureValue= targetBlind)
+            self.setFeatures(rowData= rowData, featureName= "isTargetInSmoke", featureValue= targetInSmoke)
             self.setFeatures(rowData= rowData, featureName= "targetReturnedDmg", featureValue= targetReturnedDmg)
+        
         self.setFeatures(rowData= rowData, featureName= "Label", featureValue= str(self.label))
-
         return rowData
     
 
@@ -200,4 +273,4 @@ class Fight:
             if len(rowData) != 0:
                 self.dfRows.append(rowData)
 
-        self.dfRows.append([""] * len(self.columnLabels))
+        self.dfRows.append([""] * len(Fight.features))
