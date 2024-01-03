@@ -13,21 +13,15 @@ def concatenate_csv_files(input_folder, output_file):
     # Initialize an empty list to store DataFrames
     dfs = []
 
-    # Read the first CSV file to get the column names and dtypes
-    first_csv = pd.read_csv(os.path.join(input_folder, csv_files[0]))
-    columns = list(first_csv.columns)
-    dtypes = first_csv.dtypes
-
     # Concatenate all CSV files
+    print("Reading CSV Files...")
     for csv_file in csv_files:
         current_csv = pd.read_csv(os.path.join(input_folder, csv_file))
         dfs.append(current_csv)
 
     # Concatenate all DataFrames in the list
+    print("Starting Concatenation...")
     result_df = pd.concat(dfs, ignore_index=True)
-
-    # Remove rows with all values empty (horizontal empty rows)
-    result_df = result_df.dropna(how='all')
 
     # Write the concatenated data to the output CSV file
     result_df.to_csv(output_file, index=False)
@@ -43,14 +37,11 @@ def concatenate_csv_files(input_folder, output_file):
     os.replace(output_file, output_path)
     print(f"Moved {output_file} to {input_folder}")
 
-# Get the current directory (should be 'csvConcat')
+# Get the current directory (should be 'GEPCS')
 current_dir = os.getcwd()
 
-# Get the parent directory
-parent_dir = os.path.dirname(current_dir)
-
-# Construct the path to the 'DemoFiles/csv' folder
-demo_files_dir = os.path.join(parent_dir, 'DemoFiles', 'csv')
+# Construct the path to the './DemoFiles/csv' folder
+demo_files_dir = os.path.join(current_dir, 'DemoFiles', 'csv')
 
 print(demo_files_dir)
 
