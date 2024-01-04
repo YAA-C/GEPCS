@@ -69,18 +69,23 @@ class Fight:
         return pd.DataFrame()
 
     
-    def convertAngleToLinearDelta(self, circularAngle, angleLabel):
+    def convertViewAngleToLinearDelta(self, circularAngle: float, angleName: str):
         linearAngleDelta = 0
+
+        if angleName == 'prevPitch':
+            if angleName in self.prevValueDict:
+                linearAngleDelta = circularAngle - self.prevValueDict[angleName]
+                
+        elif angleName == 'prevYaw':
+            if angleName in self.prevValueDict:
+                distance = abs(circularAngle - self.prevValueDict[angleName])
+                circularDistance = 360 - distance
+                if(distance < circularDistance):
+                    linearAngleDelta = circularAngle - self.prevValueDict[angleName]
+                else:
+                    linearAngleDelta = circularDistance if (circularAngle < self.prevValueDict[angleName]) else -circularDistance
         
-        if(angleLabel in self.prevValueDict):
-            distance = abs(circularAngle - self.prevValueDict[angleLabel])
-            circularDistance = 360 - distance
-            if(distance < circularDistance):
-                linearAngleDelta = circularAngle - self.prevValueDict[angleLabel]
-            else:
-                linearAngleDelta = circularDistance if (circularAngle < self.prevValueDict[angleLabel]) else -circularDistance
-        
-        self.prevValueDict[angleLabel] = circularAngle
+        self.prevValueDict[angleName] = circularAngle
         return linearAngleDelta
     
 
@@ -110,13 +115,14 @@ class Fight:
     def getPlayerViewAngles(self, playerTickData: pd.Series) -> tuple:
         yaw = playerTickData['m_angEyeAngles[1]']
         pitch = playerTickData['m_angEyeAngles[0]']
+        pitch = pitch - 360 if (pitch > 100) else pitch
         return (yaw, pitch)
     
 
     def getViewAngleDeltas(self, playerTickData: pd.Series) -> tuple:
         yaw, pitch = self.getPlayerViewAngles(playerTickData= playerTickData)
-        deltaYaw = self.convertAngleToLinearDelta(circularAngle= yaw, angleLabel= 'prevYaw')
-        deltaPitch = self.convertAngleToLinearDelta(circularAngle= pitch, angleLabel= 'prevPitch')
+        deltaYaw = self.convertViewAngleToLinearDelta(circularAngle= yaw, angleName= 'prevYaw')
+        deltaPitch = self.convertViewAngleToLinearDelta(circularAngle= pitch, angleName= 'prevPitch')
         return (deltaYaw, deltaPitch)
 
 

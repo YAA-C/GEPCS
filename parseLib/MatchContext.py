@@ -1,10 +1,12 @@
 import pandas as pd
 from .Filters import Filters
+from .CustomDemoParser import CustomDemoParser
 
 class MatchContext:
-    def __init__(self, hurtEvents: list, playerSteamId: int, targetSteamId: int) -> None:
+    def __init__(self, parser: CustomDemoParser, playerSteamId: int, targetSteamId: int) -> None:
         self.delta = 128
-        self.hurtEvents = Filters().filterPlayerHurtEvents(hurtEvents, playerSteamId, targetSteamId)
+        self.hurtEvents = Filters().filterPlayerHurtEvents(parser.hurtEvents, playerSteamId, targetSteamId)
+        # self.fireEvents = parser.fireEvents
         self.playerSteamId = playerSteamId
         self.targetSteamId = targetSteamId
         self.hurtTicks = dict()
@@ -21,7 +23,22 @@ class MatchContext:
         if(len(intervals) == 0):
             # No hurt event for this player registered
             return
-        
+        self.hurtIntervals = self.mergeOverlappingIntervals(intervals= intervals)
+
+
+    def generatePlayerJumpIntervals(self) -> None:
+        pass
+
+
+    def generatePlayerCrouchIntervals(self) -> None:
+        pass
+
+
+    def generatePlayerFlashedIntervals(self) -> None:
+        pass
+
+
+    def mergeOverlappingIntervals(self, intervals: list) -> list:
         intervals = sorted(intervals)
         mergedIntervals = []
         start = intervals[0][0]
@@ -34,5 +51,4 @@ class MatchContext:
             else:
                 end = max(end, intervals[i][1])
         mergedIntervals.append([start, end])
-
-        self.hurtIntervals = mergedIntervals
+        return mergedIntervals

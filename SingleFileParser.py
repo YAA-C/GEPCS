@@ -28,7 +28,7 @@ class SingleFileParser:
                 if playerSteamId == targetSteamId:
                     continue
 
-                matchContextObj: MatchContext = MatchContext(self.parser.hurtEvents, playerSteamId, targetSteamId)
+                matchContextObj: MatchContext = MatchContext(self.parser, playerSteamId, targetSteamId)
                 matchContextObj.generatePlayerHurtIntervals()
                 tickIntervals = matchContextObj.hurtIntervals
 

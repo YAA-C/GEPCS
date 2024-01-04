@@ -13,6 +13,8 @@ class CustomDemoParser:
         self.targetFile = targetFile
         self.parsedDf: pd.DataFrame
         self.players: list = []
+        self.hurtEvents: list = []
+        self.fireEvents: list = []
 
 
     def parseFile(self) -> bool:
@@ -23,6 +25,7 @@ class CustomDemoParser:
             self.parsePlayerSteamIds()
             self.parsePlayerHurtEvents()
             self.parsePlayerFireEvents()
+            self.fixHurtEventWeaponNames()
             
             self.parsedDf.set_index(['tick','steamid'], inplace=True)
             self.parsedDf = self.parsedDf.sort_index() 
@@ -53,3 +56,31 @@ class CustomDemoParser:
     def parsePlayerFireEvents(self) -> None:
         fireEvents = self.parser.parse_events("weapon_fire")
         self.fireEvents = sorted(fireEvents, key=lambda x: x['tick'])
+
+    
+    def fixHurtEventWeaponNames(self) -> None:
+        playerFireEvents = dict()
+        for player in self.parsedDf['steamid'].unique().tolist():
+            playerFireEvents[player] = [x for x in self.fireEvents if x['player_steamid'] == player]
+    
+        for player in playerFireEvents.keys():
+            hurtEventIndex = 0
+            for i, playerFireEvent in enumerate(playerFireEvents[player]):
+                # player has not fired but hurtEvents are registered on target 
+                while(hurtEventIndex < len(self.hurtEvents) and playerFireEvent['tick'] > self.hurtEvents[hurtEventIndex]['tick']):
+                    hurtEventIndex += 1
+                # This is some last shot of match which never registered.
+                if hurtEventIndex == len(self.hurtEvents):
+                    break
+                # hurtEvent is of other player
+                while(hurtEventIndex < len(self.hurtEvents) and 
+                        playerFireEvent['tick'] == self.hurtEvents[hurtEventIndex]['tick'] and 
+                        self.hurtEvents[hurtEventIndex]['attacker_steamid'] != playerFireEvent['player_steamid']):
+                    hurtEventIndex += 1
+                # This is also some last shot of match which never registered.
+                if hurtEventIndex == len(self.hurtEvents):
+                    break
+                # player has fired and shot has hit target
+                if(playerFireEvent['tick'] == self.hurtEvents[hurtEventIndex]['tick']):
+                    self.hurtEvents[hurtEventIndex]['weapon'] = playerFireEvent['weapon']
+                    hurtEventIndex += 1
