@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import random
 from parseLib.CustomDemoParser import CustomDemoParser
-from parseLib.PlayerIntervalGenerator import PlayerIntervalGenerator
+from parseLib.PlayerMatchContext import PlayerMatchContext
 from parseLib.Fight import Fight
 
 class SingleFileParser:
@@ -28,9 +28,9 @@ class SingleFileParser:
                 if playerSteamId == targetSteamId:
                     continue
 
-                intervalGenerator: PlayerIntervalGenerator = PlayerIntervalGenerator(self.parser.hurtEvents, playerSteamId, targetSteamId)
-                intervalGenerator.generateIntervals()
-                tickIntervals = intervalGenerator.hurtIntervals
+                matchContextObj: PlayerMatchContext = PlayerMatchContext(self.parser, playerSteamId, targetSteamId)
+                matchContextObj.generatePlayerHurtIntervals()
+                tickIntervals = matchContextObj.hurtIntervals
 
                 # print(player)
                 if(len(tickIntervals) == 0):
@@ -45,7 +45,7 @@ class SingleFileParser:
                         intervalStartTick= intervalStart, 
                         intervalEndTick= intervalEnd, 
                         parser= self.parser, 
-                        intervalGeneratorObj= intervalGenerator,
+                        matchContextObj= matchContextObj,
                         playerSteamId= playerSteamId,
                         targetSteamId= targetSteamId,
                         label= label,
@@ -55,7 +55,7 @@ class SingleFileParser:
         with open(f"./logs/logs.txt", '+a') as f:
             f.write(f"{completedCount}\n")
 
-        columns = ["currentTick", "X", "Y", "Z", "velocityX", "velocityY", "velocityZ", "yaw", "pitch", "utilityDmgDone", "supportUtilityUsed", "kdr", "isCrouched", "isJumping", "isFiring", "targetX", "targetY", "targetZ", "targetVelocityX", "targetVelocityY", "targetVelocityZ", "tagetYaw", "targetPitch", "dmgDone", "distToTarget", "targetHitArea", "penetrated", "weaponUsed", "targetBlind", "targetInSmoke", "targetReturnedDmg", "Label"]
+        columns = Fight.features
         mainDf:pd.DataFrame = pd.DataFrame(data=dfRows, columns=columns)
         savePath = os.path.join(os.path.dirname(__file__), f'DemoFiles\\csv\\{self.fileName[:-4]}-{random.randint(99999, 999999)}.csv')
         mainDf.to_csv(savePath, index= False)

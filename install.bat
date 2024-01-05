@@ -25,7 +25,7 @@ if %errorlevel% neq 0 (
 )
 
 echo compile and build demoparserLib for current system
-maturin develop --manifest-path=.\demoparserLib\Cargo.toml
+maturin develop --release --manifest-path=.\demoparserLib\Cargo.toml
 
 if not exist "DemoFiles\Demos\test.dem" (
     gdown "https://drive.google.com/uc?export=download&id=148PlhfTKwk4mI-rOxiDuCAPlNJLY0h5J" -O "./DemoFiles/Demos/test.dem"
