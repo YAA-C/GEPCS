@@ -1,6 +1,7 @@
 from demoparser import DemoParser
 import pandas as pd
 from .Filters import Filters
+import traceback
 
 class CustomDemoParser:
     def __init__(self, targetFile: str) -> None:
@@ -20,7 +21,7 @@ class CustomDemoParser:
     def parseFile(self) -> bool:
         try:
             self.parser = DemoParser(self.targetFile)
-            self.parsedDf = self.parser.parse_ticks(self.props)
+            self.parsedDf: pd.DataFrame = self.parser.parse_ticks(self.props)
 
             self.parsePlayerSteamIds()
             self.parsePlayerHurtEvents()
@@ -30,7 +31,7 @@ class CustomDemoParser:
             self.parsedDf.set_index(['tick','steamid'], inplace=True)
             self.parsedDf = self.parsedDf.sort_index() 
         except Exception as e:
-            print(e)
+            print(traceback.format_exc())
             return False
         return True
     
@@ -50,12 +51,13 @@ class CustomDemoParser:
     def parsePlayerHurtEvents(self) -> None:
         hurtEvents = self.parser.parse_events("player_hurt")
         hurtEvents = sorted(hurtEvents, key=lambda x: x['tick'])
-        self.hurtEvents = Filters().filterWeaponHurtEvents(hurtEvents)
+        self.hurtEvents = Filters().filterWeaponHurtEvents(hurtEvents= hurtEvents)
 
 
     def parsePlayerFireEvents(self) -> None:
         fireEvents = self.parser.parse_events("weapon_fire")
         self.fireEvents = sorted(fireEvents, key=lambda x: x['tick'])
+        self.fireEvents = Filters().filterWeaponFireEvents(fireEvents= fireEvents)
 
     
     def fixHurtEventWeaponNames(self) -> None:
@@ -65,22 +67,28 @@ class CustomDemoParser:
     
         for player in playerFireEvents.keys():
             hurtEventIndex = 0
-            for i, playerFireEvent in enumerate(playerFireEvents[player]):
+            for _, playerFireEvent in enumerate(playerFireEvents[player]):
                 # player has not fired but hurtEvents are registered on target 
                 while(hurtEventIndex < len(self.hurtEvents) and playerFireEvent['tick'] > self.hurtEvents[hurtEventIndex]['tick']):
                     hurtEventIndex += 1
                 # This is some last shot of match which never registered.
                 if hurtEventIndex == len(self.hurtEvents):
                     break
-                # hurtEvent is of other player
-                while(hurtEventIndex < len(self.hurtEvents) and 
-                        playerFireEvent['tick'] == self.hurtEvents[hurtEventIndex]['tick'] and 
-                        self.hurtEvents[hurtEventIndex]['attacker_steamid'] != playerFireEvent['player_steamid']):
-                    hurtEventIndex += 1
-                # This is also some last shot of match which never registered.
-                if hurtEventIndex == len(self.hurtEvents):
-                    break
-                # player has fired and shot has hit target
-                if(playerFireEvent['tick'] == self.hurtEvents[hurtEventIndex]['tick']):
+                while(hurtEventIndex < len(self.hurtEvents) and playerFireEvent['tick'] == self.hurtEvents[hurtEventIndex]['tick']):
+                    # hurtEvent is of other player
+                    if self.hurtEvents[hurtEventIndex]['attacker_steamid'] != playerFireEvent['player_steamid']:
+                        hurtEventIndex += 1
+                        continue
+                    # player has fired and shot has hit target
                     self.hurtEvents[hurtEventIndex]['weapon'] = playerFireEvent['weapon']
                     hurtEventIndex += 1
+
+        burstWeapons: dict = {
+            'glock' : 'weapon_glock',
+            'famas' : 'weapon_famas'
+        }
+
+        for event in self.hurtEvents:
+            if event['weapon'] in burstWeapons:
+                event['weapon'] = burstWeapons[event['weapon']]
+            assert event['weapon'].startswith('weapon_'), f"wrong weapon name in hurt event {event}"

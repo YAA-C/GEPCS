@@ -2,14 +2,15 @@ import pandas as pd
 from .Filters import Filters
 from .CustomDemoParser import CustomDemoParser
 
-class MatchContext:
+class PlayerMatchContext:
     def __init__(self, parser: CustomDemoParser, playerSteamId: int, targetSteamId: int) -> None:
         self.delta = 128
-        self.hurtEvents = Filters().filterPlayerHurtEvents(parser.hurtEvents, playerSteamId, targetSteamId)
-        # self.fireEvents = parser.fireEvents
+        self.hurtEvents = Filters().filterPlayerHurtEvents(hurtEvents= parser.hurtEvents, playerSteamId= playerSteamId, targetSteamId= targetSteamId)
+        self.fireEvents = Filters().filterPlayerFireEvents(fireEvents= parser.fireEvents, playerSteamId= playerSteamId)
         self.playerSteamId = playerSteamId
         self.targetSteamId = targetSteamId
         self.hurtTicks = dict()
+        self.fireTicks = set()
         self.hurtIntervals = []
 
 
@@ -24,6 +25,10 @@ class MatchContext:
             # No hurt event for this player registered
             return
         self.hurtIntervals = self.mergeOverlappingIntervals(intervals= intervals)
+
+
+    def generateWeaponFireTicks(self) -> None:
+        self.fireTicks = set([event['tick'] for event in self.fireEvents])
 
 
     def generatePlayerJumpIntervals(self) -> None:

@@ -1,8 +1,8 @@
 import pandas as pd
 from math import sqrt
-from .MatchContext import MatchContext
+from .PlayerMatchContext import PlayerMatchContext
 from .CustomDemoParser import CustomDemoParser
-
+from .Filters import Filters
 
 class Fight:
     features: list = [
@@ -42,7 +42,7 @@ class Fight:
                 intervalStartTick: int, 
                 intervalEndTick: int, 
                 parser: CustomDemoParser, 
-                matchContextObj: MatchContext, 
+                matchContextObj: PlayerMatchContext, 
                 playerSteamId: int,
                 targetSteamId: int,
                 label: bool,
@@ -51,7 +51,7 @@ class Fight:
         self.intervalStartTick: int = intervalStartTick
         self.intervalEndTick: int = intervalEndTick
         self.parser: CustomDemoParser = parser
-        self.matchContextObj: MatchContext = matchContextObj
+        self.matchContextObj: PlayerMatchContext = matchContextObj
         self.playerSteamId: int = playerSteamId
         self.targetSteamId: int = targetSteamId
         self.label: bool = label
@@ -103,9 +103,9 @@ class Fight:
 
         if('prevX' in self.prevValueDict):
             deltaX = X - self.prevValueDict['prevX']
-            deltaY = X - self.prevValueDict['prevX']
-            deltaZ = X - self.prevValueDict['prevX']
-        
+            deltaY = Y - self.prevValueDict['prevY']
+            deltaZ = Z - self.prevValueDict['prevZ']
+            
         self.prevValueDict['prevX'] = X
         self.prevValueDict['prevY'] = Y
         self.prevValueDict['prevZ'] = Z
@@ -116,6 +116,8 @@ class Fight:
         yaw = playerTickData['m_angEyeAngles[1]']
         pitch = playerTickData['m_angEyeAngles[0]']
         pitch = pitch - 360 if (pitch > 100) else pitch
+        assert yaw >=0 and yaw <= 360, "Wrong yaw values"
+        assert pitch <= 90 and pitch >= -90, "Wrong pitch Values"
         return (yaw, pitch)
     
 
@@ -135,9 +137,8 @@ class Fight:
         return False
     
 
-    #NOT IMPLEMENTED
-    def getPlayerFiring(self, playerTickData: pd.Series) -> bool:
-        return False
+    def getPlayerFiring(self, tick: int) -> bool:
+        return tick in self.matchContextObj.fireTicks
 
 
     def getTargetTotalDamage(self, targetHurtEvent: dict) -> float:
@@ -162,6 +163,10 @@ class Fight:
 
     def getUsedWeapon(self, targetHurtEvent: dict) -> str:
         return targetHurtEvent["weapon"]
+
+
+    def getWeaponCategory(self, weaponName: str) -> str:
+        return Filters().getWeaponCategory(weaponName= weaponName)
 
 
     #NOT IMPLEMENTED
@@ -223,7 +228,7 @@ class Fight:
         kdr = self.getPlayerKDR()
         isCrouched = self.getPlayerCrouched(playerTickData= playerTickData)
         isJumping = self.getPlayerJumped(playerTickData= playerTickData)
-        isFiring = self.getPlayerFiring(playerTickData= playerTickData)
+        isFiring = self.getPlayerFiring(tick= tick)
         
         self.setFeatures(rowData= rowData, featureName= "currentTick", featureValue= currentTick)
         self.setFeatures(rowData= rowData, featureName= "playerId", featureValue= self.playerSteamId)
@@ -243,7 +248,7 @@ class Fight:
         if(tick in self.matchContextObj.hurtTicks):
             targetHurtEvent = self.matchContextObj.hurtTicks[tick]
             targetTickData = self.getByIndex(self.parser.parsedDf, (tick, targetHurtEvent["player_steamid"])).iloc[0, :] 
-            
+
             targetX, targetY, targetZ = self.getPlayerLocation(playerTickData= targetTickData)
             targetDeltaX, targetDeltaY, targetDeltaZ = self.getLocationDeltas(playerTickData= targetTickData)
             dmgDone = self.getTargetTotalDamage(targetHurtEvent= targetHurtEvent)
@@ -251,6 +256,7 @@ class Fight:
             targetHitArea = self.getTargetHitSpot(targetHurtEvent= targetHurtEvent)
             penetrated = self.getShotPenetrated()
             weaponUsed = self.getUsedWeapon(targetHurtEvent= targetHurtEvent)
+            weaponCategory = self.getWeaponCategory(weaponName= weaponUsed)
             targetBlind = self.getPlayerBlind()
             targetInSmoke = self.getSmokeInVision()
             targetReturnedDmg = self.getReturnedDamge()
@@ -263,7 +269,7 @@ class Fight:
             self.setFeatures(rowData= rowData, featureName= "targetHitArea", featureValue= targetHitArea)
             self.setFeatures(rowData= rowData, featureName= "penetratedObject", featureValue= penetrated)
             self.setFeatures(rowData= rowData, featureName= "weaponUsed", featureValue= weaponUsed)
-            self.setFeatures(rowData= rowData, featureName= "weaponCategory", featureValue= 0)
+            self.setFeatures(rowData= rowData, featureName= "weaponCategory", featureValue= weaponCategory)
             self.setFeatures(rowData= rowData, featureName= "isScoping", featureValue= 0)
             self.setFeatures(rowData= rowData, featureName= "isTargetBlind", featureValue= targetBlind)
             self.setFeatures(rowData= rowData, featureName= "isTargetInSmoke", featureValue= targetInSmoke)

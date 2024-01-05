@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import random
 from parseLib.CustomDemoParser import CustomDemoParser
-from parseLib.MatchContext import MatchContext
+from parseLib.PlayerMatchContext import PlayerMatchContext
 from parseLib.Fight import Fight
 
 class SingleFileParser:
@@ -28,7 +28,7 @@ class SingleFileParser:
                 if playerSteamId == targetSteamId:
                     continue
 
-                matchContextObj: MatchContext = MatchContext(self.parser, playerSteamId, targetSteamId)
+                matchContextObj: PlayerMatchContext = PlayerMatchContext(self.parser, playerSteamId, targetSteamId)
                 matchContextObj.generatePlayerHurtIntervals()
                 tickIntervals = matchContextObj.hurtIntervals
 
