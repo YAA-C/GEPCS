@@ -94,6 +94,7 @@ class Fight:
         X = playerTickData['X']
         Y = playerTickData['Y']
         Z = playerTickData['Z']
+        Z = Z + 52.0 if self.getPlayerCrouched(playerTickData= playerTickData) else Z + 72.0
         return (X, Y, Z)
     
 
@@ -129,7 +130,7 @@ class Fight:
 
 
     def getPlayerCrouched(self, playerTickData: pd.Series) -> bool:
-        return playerTickData['m_bDucked'] | playerTickData['m_bDucking']
+        return bool(playerTickData['m_bDucked'] or playerTickData['m_bDucking'])
 
 
     #NOT IMPLEMENTED
@@ -153,6 +154,7 @@ class Fight:
 
 
     def getTargetHitSpot(self, targetHurtEvent: dict) -> int:
+        assert targetHurtEvent["hitgroup"] >= 0 and targetHurtEvent["hitgroup"] <= 8, f"Bad Hitgroup {targetHurtEvent}"
         return targetHurtEvent["hitgroup"]
 
 
