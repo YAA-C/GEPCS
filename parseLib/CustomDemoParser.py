@@ -1,7 +1,8 @@
 from demoparser import DemoParser
 import pandas as pd
-from .Filters import Filters
 import traceback
+from pprint import pprint
+from .Filters import Filters
 
 class CustomDemoParser:
     def __init__(self, targetFile: str) -> None:
@@ -38,13 +39,14 @@ class CustomDemoParser:
 
     def parsePlayerSteamIds(self) -> None:
         self.allPlayers = self.parsedDf['steamid'].unique().tolist()
+        self.players = Filters().filterHumanPlayers(self.allPlayers)
+        self.allPlayers = sorted(self.allPlayers)
+        self.players = sorted(self.players)
         x = []
         for i in self.allPlayers:
             tmp = self.parsedDf.loc[self.parsedDf['steamid'] == i]
             x.append({f'id_{i}': tmp.iloc[0, 12]})
-        from pprint import pprint
         pprint(x)
-        self.players = Filters().filterHumanPlayers(self.allPlayers)
         print("After filtering : ", self.players)
 
 

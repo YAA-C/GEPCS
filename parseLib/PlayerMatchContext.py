@@ -1,4 +1,3 @@
-import pandas as pd
 from .Filters import Filters
 from .CustomDemoParser import CustomDemoParser
 

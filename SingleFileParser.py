@@ -30,6 +30,7 @@ class SingleFileParser:
 
                 matchContextObj: PlayerMatchContext = PlayerMatchContext(self.parser, playerSteamId, targetSteamId)
                 matchContextObj.generatePlayerHurtIntervals()
+                matchContextObj.generateWeaponFireTicks()
                 tickIntervals = matchContextObj.hurtIntervals
 
                 # print(player)
