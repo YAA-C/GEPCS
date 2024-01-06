@@ -89,12 +89,17 @@ class Fight:
         return linearAngleDelta
     
 
-    # TODO: Modify Z when player is crouching 
     def getPlayerLocation(self, playerTickData: pd.Series) -> tuple:
         X = playerTickData['X']
         Y = playerTickData['Y']
         Z = playerTickData['Z']
-        Z = Z + 52.0 if self.getPlayerCrouched(playerTickData= playerTickData) else Z + 72.0
+        crouchState: int = self.getPlayerCrouched(playerTickData= playerTickData)
+        if crouchState == 1:    # In crouching animation
+            Z = Z + 62.0
+        elif crouchState == 2:  # Crouched completely
+            Z = Z + 52.0
+        else:   # Standing
+            Z = Z + 72.0
         return (X, Y, Z)
     
 
@@ -129,8 +134,14 @@ class Fight:
         return (deltaYaw, deltaPitch)
 
 
-    def getPlayerCrouched(self, playerTickData: pd.Series) -> bool:
-        return bool(playerTickData['m_bDucked'] or playerTickData['m_bDucking'])
+    def getPlayerCrouched(self, playerTickData: pd.Series) -> int:
+        inDucking: bool = bool(playerTickData['m_bDucking'])
+        completelyDucked: bool = bool(playerTickData['m_bDucked'])
+        if completelyDucked:
+            return 2
+        elif inDucking:
+            return 1
+        return 0
 
 
     #NOT IMPLEMENTED
