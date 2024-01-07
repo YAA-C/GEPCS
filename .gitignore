@@ -11,3 +11,5 @@ DemoFiles/Demos/*
 !DemoFiles/Demos/.gitkeep
 
 /logs/logs*.txt
+
+/visualization/.ipynb_checkpoints
