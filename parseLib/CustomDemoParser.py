@@ -10,7 +10,7 @@ class CustomDemoParser:
             "X", "Y", "Z",
             "m_angEyeAngles[0]", "m_angEyeAngles[1]", 
             "m_vecVelocity[0]", "m_vecVelocity[1]", "m_vecVelocity[2]",
-            "m_bDucked", "m_bDucking",
+            "m_bDucked", "m_bDucking", "m_bIsScoped"
         ]
         self.targetFile = targetFile
         self.parsedDf: pd.DataFrame
