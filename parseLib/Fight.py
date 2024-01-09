@@ -154,7 +154,7 @@ class Fight:
 
 
     def getTargetTotalDamage(self, targetHurtEvent: dict) -> float:
-        return targetHurtEvent["dmg_health"] + targetHurtEvent["dmg_armor"]
+        return int(targetHurtEvent['dmg_health']) + int(targetHurtEvent['dmg_armor']) * 2
     
 
     def getDistanceToTarget(self, X: list, Y: list) -> float:
@@ -166,7 +166,7 @@ class Fight:
 
     def getTargetHitSpot(self, targetHurtEvent: dict) -> int:
         assert targetHurtEvent["hitgroup"] >= 0 and targetHurtEvent["hitgroup"] <= 8, f"Bad Hitgroup {targetHurtEvent}"
-        return targetHurtEvent["hitgroup"]
+        return int(targetHurtEvent["hitgroup"])
 
 
     #NOT IMPLEMENTED
@@ -180,6 +180,10 @@ class Fight:
 
     def getWeaponCategory(self, weaponName: str) -> str:
         return Filters().getWeaponCategory(weaponName= weaponName)
+
+
+    def getPlayerScoping(self, playerTickData: pd.Series) -> bool:
+        return bool(playerTickData["m_bIsScoped"])
 
 
     #NOT IMPLEMENTED
@@ -270,6 +274,7 @@ class Fight:
             penetrated = self.getShotPenetrated()
             weaponUsed = self.getUsedWeapon(targetHurtEvent= targetHurtEvent)
             weaponCategory = self.getWeaponCategory(weaponName= weaponUsed)
+            isScoping = self.getPlayerScoping(playerTickData= playerTickData)
             targetBlind = self.getPlayerBlind()
             targetInSmoke = self.getSmokeInVision()
             targetReturnedDmg = self.getReturnedDamge()
@@ -283,7 +288,7 @@ class Fight:
             self.setFeatures(rowData= rowData, featureName= "penetratedObject", featureValue= penetrated)
             self.setFeatures(rowData= rowData, featureName= "weaponUsed", featureValue= weaponUsed)
             self.setFeatures(rowData= rowData, featureName= "weaponCategory", featureValue= weaponCategory)
-            self.setFeatures(rowData= rowData, featureName= "isScoping", featureValue= 0)
+            self.setFeatures(rowData= rowData, featureName= "isScoping", featureValue= isScoping)
             self.setFeatures(rowData= rowData, featureName= "isTargetBlind", featureValue= targetBlind)
             self.setFeatures(rowData= rowData, featureName= "isTargetInSmoke", featureValue= targetInSmoke)
             self.setFeatures(rowData= rowData, featureName= "targetReturnedDmg", featureValue= targetReturnedDmg)
