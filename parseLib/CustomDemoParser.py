@@ -24,6 +24,7 @@ class CustomDemoParser:
             self.parser = DemoParser(self.targetFile)
             self.parsedDf: pd.DataFrame = self.parser.parse_ticks(self.props)
 
+            self.checkDemoConstraints()
             self.parsePlayerSteamIds()
             self.parsePlayerHurtEvents()
             self.parsePlayerFireEvents()
@@ -35,7 +36,35 @@ class CustomDemoParser:
             print(traceback.format_exc())
             return False
         return True
-    
+
+
+    def checkDemoConstraints(self) -> None:
+        headerData: dict = self.parser.parse_header()
+        totalTicks: int = int(headerData["protoplayback_tickscol"])
+        totalSeconds: float = float(headerData["playback_time"])
+        tickrate: float = totalTicks / totalSeconds
+        
+        averageSnapshotRate: float = 0
+        ticks = self.parsedDf['tick'].unique()
+        ticks.sort()
+        for i in range(1, len(ticks)):
+            deltaTick = abs(ticks[i] - ticks[i - 1])
+            if deltaTick == 0:
+                # Double tick (round start bug)
+                continue
+            currentTickRate = 128.00 / deltaTick
+            averageSnapshotRate += currentTickRate
+        averageSnapshotRate = averageSnapshotRate / (len(ticks) - 1)
+
+        tickratePercentage: float = tickrate * 100.00 / 128.00
+        snapshotRatePercentage: float = averageSnapshotRate * 100.00 / 128.00
+        
+        print(f"TickRate {tickrate:.3f} --> {tickratePercentage:.3f} %")
+        print(f"Average SnapshopRate {averageSnapshotRate:.3f} --> {snapshotRatePercentage:.3f} %")
+
+        assert (tickratePercentage >= 80.00 and tickratePercentage <= 110.00), "Tickrate is not proper"
+        assert (snapshotRatePercentage >= 80.00 and snapshotRatePercentage <= 110.00), "Snapshotrate is not proper"
+
 
     def parsePlayerSteamIds(self) -> None:
         self.allPlayers = self.parsedDf['steamid'].unique().tolist()

@@ -1,5 +1,5 @@
 import pandas as pd
-from math import sqrt
+from .CustomMath import eularDistance
 from .PlayerMatchContext import PlayerMatchContext
 from .CustomDemoParser import CustomDemoParser
 from .Filters import Filters
@@ -158,10 +158,7 @@ class Fight:
     
 
     def getDistanceToTarget(self, X: list, Y: list) -> float:
-        dist = 0
-        for i in range(len(X)):
-            dist += ((X[i] - Y[i]) ** 2)
-        return sqrt(dist)
+        return eularDistance(X= X, Y= Y)
 
 
     def getTargetHitSpot(self, targetHurtEvent: dict) -> int:
@@ -269,7 +266,7 @@ class Fight:
             targetX, targetY, targetZ = self.getPlayerLocation(playerTickData= targetTickData)
             targetDeltaX, targetDeltaY, targetDeltaZ = self.getLocationDeltas(playerTickData= targetTickData)
             dmgDone = self.getTargetTotalDamage(targetHurtEvent= targetHurtEvent)
-            distToTarget = self.getDistanceToTarget([targetX, targetY, targetZ], [X, Y, Z])
+            distToTarget = self.getDistanceToTarget((targetX, targetY, targetZ), (X, Y, Z))
             targetHitArea = self.getTargetHitSpot(targetHurtEvent= targetHurtEvent)
             penetrated = self.getShotPenetrated()
             weaponUsed = self.getUsedWeapon(targetHurtEvent= targetHurtEvent)
