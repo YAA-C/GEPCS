@@ -17,6 +17,7 @@ class CustomDemoParser:
         self.players: list = []
         self.hurtEvents: list = []
         self.fireEvents: list = []
+        self.blindEvents: list = []
 
 
     def parseFile(self) -> bool:
@@ -29,6 +30,7 @@ class CustomDemoParser:
             self.parsePlayerHurtEvents()
             self.parsePlayerFireEvents()
             self.fixHurtEventWeaponNames()
+            self.parsePlayerBlindEvents()
             
             self.parsedDf.set_index(['tick','steamid'], inplace=True)
             self.parsedDf = self.parsedDf.sort_index() 
@@ -74,7 +76,7 @@ class CustomDemoParser:
         x = []
         for i in self.allPlayers:
             tmp = self.parsedDf.loc[self.parsedDf['steamid'] == i]
-            x.append({f'id_{i}': tmp.iloc[0, 12]})
+            x.append({f'id_{i}': tmp.iloc[0, len(self.props) + 2]})
         pprint(x)
         print("After filtering : ", self.players)
 
@@ -123,3 +125,8 @@ class CustomDemoParser:
             if event['weapon'] in burstWeapons:
                 event['weapon'] = burstWeapons[event['weapon']]
             assert event['weapon'].startswith('weapon_'), f"wrong weapon name in hurt event {event}"
+
+    
+    def parsePlayerBlindEvents(self) -> None:
+        playerBlindEvents = self.parser.parse_events("player_blind")
+        self.blindEvents = sorted(playerBlindEvents, key=lambda x: x['tick'])

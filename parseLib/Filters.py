@@ -59,6 +59,10 @@ class Filters:
         return [event for event in fireEvents if event['player_steamid'] == playerSteamId]
     
 
+    def filterPlayerBlindEvents(self, blindEvents: list, playerSteamId: int) -> list:
+        return [event for event in blindEvents if event['player_steamid'] == playerSteamId]
+    
+
     def getWeaponCategory(self, weaponName: str) -> str:
         return self.weaponNameToCategory[weaponName]
     
