@@ -42,7 +42,7 @@ class Fight:
                 intervalStartTick: int, 
                 intervalEndTick: int, 
                 parser: CustomDemoParser, 
-                matchContextObj: PlayerMatchContext, 
+                playerMatchContextObj: PlayerMatchContext, 
                 playerSteamId: int,
                 targetSteamId: int,
                 label: bool,
@@ -51,7 +51,7 @@ class Fight:
         self.intervalStartTick: int = intervalStartTick
         self.intervalEndTick: int = intervalEndTick
         self.parser: CustomDemoParser = parser
-        self.matchContextObj: PlayerMatchContext = matchContextObj
+        self.playerMatchContextObj: PlayerMatchContext = playerMatchContextObj
         self.playerSteamId: int = playerSteamId
         self.targetSteamId: int = targetSteamId
         self.label: bool = label
@@ -150,7 +150,7 @@ class Fight:
     
 
     def getPlayerFiring(self, tick: int) -> bool:
-        return tick in self.matchContextObj.fireTicks
+        return tick in self.playerMatchContextObj.fireTicks
 
 
     def getTargetTotalDamage(self, targetHurtEvent: dict) -> float:
@@ -184,8 +184,8 @@ class Fight:
 
 
     #NOT IMPLEMENTED
-    def getPlayerBlind(self) -> bool:
-        return False
+    def getPlayerBlind(self, tick) -> bool:
+        return self.playerMatchContextObj.getPlayerBlindness(tick= tick)
 
 
     #NOT IMPLEMENTED
@@ -232,7 +232,8 @@ class Fight:
                 self.minTick = tick
             playerTickData: pd.Series = playerTickData.iloc[0, :]
 
-        currentTick = tick - self.minTick
+        currentTick = tick
+        # currentTick = tick - self.minTick
         X, Y, Z = self.getPlayerLocation(playerTickData= playerTickData)
         deltaX, deltaY, deltaZ = self.getLocationDeltas(playerTickData= playerTickData)
         yaw, pitch = self.getPlayerViewAngles(playerTickData= playerTickData)
@@ -240,18 +241,20 @@ class Fight:
         utilityDmgDone = self.getUtilityDamageDone()
         supportUtilityUsed = self.getSupportUtilityUsed()
         kdr = self.getPlayerKDR()
+        isFlashed = self.getPlayerBlind(tick= tick)
         isCrouched = self.getPlayerCrouched(playerTickData= playerTickData)
         isJumping = self.getPlayerJumped(playerTickData= playerTickData)
         isFiring = self.getPlayerFiring(tick= tick)
         
         self.setFeatures(rowData= rowData, featureName= "currentTick", featureValue= currentTick)
+        # self.setFeatures(rowData= rowData, featureName= "playerId", featureValue= f"{self.playerSteamId} {playerTickData['name']}")
         self.setFeatures(rowData= rowData, featureName= "playerId", featureValue= self.playerSteamId)
         self.setFeatures(rowData= rowData, featureName= ("X", "Y", "Z"), featureValue= (X, Y, Z))
         self.setFeatures(rowData= rowData, featureName= ("deltaX", "deltaY", "deltaZ"), featureValue= (deltaX, deltaY, deltaZ))
         self.setFeatures(rowData= rowData, featureName= ("yaw", "pitch"), featureValue= (yaw, pitch))
         self.setFeatures(rowData= rowData, featureName= ("deltaYaw", "deltaPitch"), featureValue= (deltaYaw, deltaPitch))
         self.setFeatures(rowData= rowData, featureName= "deltaAimArc", featureValue= 0)
-        self.setFeatures(rowData= rowData, featureName= "isFlashed", featureValue= 0)
+        self.setFeatures(rowData= rowData, featureName= "isFlashed", featureValue= isFlashed)
         self.setFeatures(rowData= rowData, featureName= "isCrouching", featureValue= isCrouched)
         self.setFeatures(rowData= rowData, featureName= "isJumping", featureValue= isJumping)
         self.setFeatures(rowData= rowData, featureName= "utilityDmgDone", featureValue= utilityDmgDone)
@@ -259,8 +262,8 @@ class Fight:
         self.setFeatures(rowData= rowData, featureName= "KDR", featureValue= kdr)
         self.setFeatures(rowData= rowData, featureName= "isFiring", featureValue= isFiring)
 
-        if(tick in self.matchContextObj.hurtTicks):
-            targetHurtEvent = self.matchContextObj.hurtTicks[tick]
+        if(tick in self.playerMatchContextObj.hurtTicks):
+            targetHurtEvent = self.playerMatchContextObj.hurtTicks[tick]
             targetTickData = self.getByIndex(self.parser.parsedDf, (tick, targetHurtEvent["player_steamid"])).iloc[0, :] 
 
             targetX, targetY, targetZ = self.getPlayerLocation(playerTickData= targetTickData)
@@ -272,7 +275,7 @@ class Fight:
             weaponUsed = self.getUsedWeapon(targetHurtEvent= targetHurtEvent)
             weaponCategory = self.getWeaponCategory(weaponName= weaponUsed)
             isScoping = self.getPlayerScoping(playerTickData= playerTickData)
-            targetBlind = self.getPlayerBlind()
+            targetBlind = 0 # self.getPlayerBlind()
             targetInSmoke = self.getSmokeInVision()
             targetReturnedDmg = self.getReturnedDamge()
 

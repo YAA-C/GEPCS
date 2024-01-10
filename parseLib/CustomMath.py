@@ -1,4 +1,5 @@
 from math import sqrt
+from functools import cache
 
 class BezierCurve:
     def __init__(self, controlPoints) -> None:
@@ -6,7 +7,7 @@ class BezierCurve:
         self.controlPoints = controlPoints
 
 
-    def curvePoints(self, t: float):
+    def curvePoints(self, t: float) -> tuple:
         x0, y0 = self.controlPoints[0][0], self.controlPoints[0][1]
         x1, y1 = self.controlPoints[1][0], self.controlPoints[1][1]
         x2, y2 = self.controlPoints[2][0], self.controlPoints[2][1]
@@ -33,14 +34,14 @@ class BezierCurve:
         return (X, Y)
 
 
-    def solveBezierCurveY(self, X: float):
+    @cache
+    def solveBezierCurveY(self, X: float) -> float:
         precision:float = 0.0001
         left: float = 0.00
         right: float = 1.00
-        while (left <= right) and ((right - left) > precision):
+        while (left < right) and ((right - left) > precision):
             mid: float = (left + right) / 2
             midPoint: tuple = self.curvePoints(mid)
-            print(mid, midPoint)
             if midPoint[0] < X:
                 left = mid + precision
             else:

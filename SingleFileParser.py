@@ -21,19 +21,20 @@ class SingleFileParser:
     def start(self):
         dfRows = []
         completedCount = 0
-
         label = False
+        
         for playerSteamId in self.parser.players:
+            playerMatchContextObj: PlayerMatchContext = PlayerMatchContext(self.parser, playerSteamId)
+            playerMatchContextObj.generateWeaponFireTicks()
+            playerMatchContextObj.generatePlayerFlashedIntervals()
+
             for targetSteamId in self.parser.allPlayers:
                 if playerSteamId == targetSteamId:
                     continue
 
-                matchContextObj: PlayerMatchContext = PlayerMatchContext(self.parser, playerSteamId, targetSteamId)
-                matchContextObj.generatePlayerHurtIntervals()
-                matchContextObj.generateWeaponFireTicks()
-                tickIntervals = matchContextObj.hurtIntervals
+                playerMatchContextObj.updateTarget(targetSteamId= targetSteamId)
+                tickIntervals = playerMatchContextObj.hurtIntervals
 
-                # print(player)
                 if(len(tickIntervals) == 0):
                     continue
 
@@ -46,7 +47,7 @@ class SingleFileParser:
                         intervalStartTick= intervalStart, 
                         intervalEndTick= intervalEnd, 
                         parser= self.parser, 
-                        matchContextObj= matchContextObj,
+                        playerMatchContextObj= playerMatchContextObj,
                         playerSteamId= playerSteamId,
                         targetSteamId= targetSteamId,
                         label= label,
