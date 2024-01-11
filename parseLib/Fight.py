@@ -1,5 +1,6 @@
 import pandas as pd
 from .CustomMath import eularDistance
+from .GlobalMatchContext import GlobalMatchContext
 from .PlayerMatchContext import PlayerMatchContext
 from .CustomDemoParser import CustomDemoParser
 from .Filters import Filters
@@ -42,6 +43,7 @@ class Fight:
                 intervalStartTick: int, 
                 intervalEndTick: int, 
                 parser: CustomDemoParser, 
+                globalMatchContextObj: GlobalMatchContext,
                 playerMatchContextObj: PlayerMatchContext, 
                 playerSteamId: int,
                 targetSteamId: int,
@@ -51,6 +53,7 @@ class Fight:
         self.intervalStartTick: int = intervalStartTick
         self.intervalEndTick: int = intervalEndTick
         self.parser: CustomDemoParser = parser
+        self.globalMatchContext: GlobalMatchContext = globalMatchContextObj
         self.playerMatchContextObj: PlayerMatchContext = playerMatchContextObj
         self.playerSteamId: int = playerSteamId
         self.targetSteamId: int = targetSteamId
@@ -183,9 +186,8 @@ class Fight:
         return bool(playerTickData["m_bIsScoped"])
 
 
-    #NOT IMPLEMENTED
-    def getPlayerBlind(self, tick) -> bool:
-        return self.playerMatchContextObj.getPlayerBlindness(tick= tick)
+    def getPlayerBlind(self, playerSteamId:int, tick: int) -> bool:
+        return self.globalMatchContext.getPlayerBlindness(playerSteamId= playerSteamId, tick= tick)
 
 
     #NOT IMPLEMENTED
@@ -232,8 +234,8 @@ class Fight:
                 self.minTick = tick
             playerTickData: pd.Series = playerTickData.iloc[0, :]
 
-        currentTick = tick
-        # currentTick = tick - self.minTick
+        # currentTick = tick
+        currentTick = tick - self.minTick
         X, Y, Z = self.getPlayerLocation(playerTickData= playerTickData)
         deltaX, deltaY, deltaZ = self.getLocationDeltas(playerTickData= playerTickData)
         yaw, pitch = self.getPlayerViewAngles(playerTickData= playerTickData)
@@ -241,7 +243,7 @@ class Fight:
         utilityDmgDone = self.getUtilityDamageDone()
         supportUtilityUsed = self.getSupportUtilityUsed()
         kdr = self.getPlayerKDR()
-        isFlashed = self.getPlayerBlind(tick= tick)
+        isFlashed = self.getPlayerBlind(playerSteamId= self.playerSteamId, tick= tick)
         isCrouched = self.getPlayerCrouched(playerTickData= playerTickData)
         isJumping = self.getPlayerJumped(playerTickData= playerTickData)
         isFiring = self.getPlayerFiring(tick= tick)
@@ -275,7 +277,7 @@ class Fight:
             weaponUsed = self.getUsedWeapon(targetHurtEvent= targetHurtEvent)
             weaponCategory = self.getWeaponCategory(weaponName= weaponUsed)
             isScoping = self.getPlayerScoping(playerTickData= playerTickData)
-            targetBlind = 0 # self.getPlayerBlind()
+            targetBlind = self.getPlayerBlind(playerSteamId= self.targetSteamId, tick= tick)
             targetInSmoke = self.getSmokeInVision()
             targetReturnedDmg = self.getReturnedDamge()
 
