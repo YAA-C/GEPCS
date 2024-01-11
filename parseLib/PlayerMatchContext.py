@@ -1,5 +1,9 @@
 from .Filters import Filters
 from .CustomDemoParser import CustomDemoParser
+<<<<<<< Updated upstream
+=======
+
+>>>>>>> Stashed changes
 
 class PlayerMatchContext:
     def __init__(self, parser: CustomDemoParser, playerSteamId: int, targetSteamId: int) -> None:
@@ -7,7 +11,14 @@ class PlayerMatchContext:
         self.hurtEvents = Filters().filterPlayerHurtEvents(hurtEvents= parser.hurtEvents, playerSteamId= playerSteamId, targetSteamId= targetSteamId)
         self.fireEvents = Filters().filterPlayerFireEvents(fireEvents= parser.fireEvents, playerSteamId= playerSteamId)
         self.playerSteamId = playerSteamId
+<<<<<<< Updated upstream
         self.targetSteamId = targetSteamId
+=======
+        self.fireTicks = set()
+
+
+    def updateTarget(self, targetSteamId: int) -> None:
+>>>>>>> Stashed changes
         self.hurtTicks = dict()
         self.fireTicks = set()
         self.hurtIntervals = []
@@ -38,10 +49,13 @@ class PlayerMatchContext:
         pass
 
 
+<<<<<<< Updated upstream
     def generatePlayerFlashedIntervals(self) -> None:
         pass
 
 
+=======
+>>>>>>> Stashed changes
     def mergeOverlappingIntervals(self, intervals: list) -> list:
         intervals = sorted(intervals)
         mergedIntervals = []

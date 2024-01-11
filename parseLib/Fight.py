@@ -1,8 +1,14 @@
 import pandas as pd
+<<<<<<< Updated upstream
 from math import sqrt
+=======
+from .CustomMath import eularDistance
+from .GlobalMatchContext import GlobalMatchContext
+>>>>>>> Stashed changes
 from .PlayerMatchContext import PlayerMatchContext
 from .CustomDemoParser import CustomDemoParser
 from .Filters import Filters
+
 
 class Fight:
     features: list = [
@@ -42,7 +48,12 @@ class Fight:
                 intervalStartTick: int, 
                 intervalEndTick: int, 
                 parser: CustomDemoParser, 
+<<<<<<< Updated upstream
                 matchContextObj: PlayerMatchContext, 
+=======
+                globalMatchContextObj: GlobalMatchContext,
+                playerMatchContextObj: PlayerMatchContext, 
+>>>>>>> Stashed changes
                 playerSteamId: int,
                 targetSteamId: int,
                 label: bool,
@@ -51,7 +62,12 @@ class Fight:
         self.intervalStartTick: int = intervalStartTick
         self.intervalEndTick: int = intervalEndTick
         self.parser: CustomDemoParser = parser
+<<<<<<< Updated upstream
         self.matchContextObj: PlayerMatchContext = matchContextObj
+=======
+        self.globalMatchContext: GlobalMatchContext = globalMatchContextObj
+        self.playerMatchContextObj: PlayerMatchContext = playerMatchContextObj
+>>>>>>> Stashed changes
         self.playerSteamId: int = playerSteamId
         self.targetSteamId: int = targetSteamId
         self.label: bool = label
@@ -186,9 +202,14 @@ class Fight:
         return bool(playerTickData["m_bIsScoped"])
 
 
+<<<<<<< Updated upstream
     #NOT IMPLEMENTED
     def getPlayerBlind(self) -> bool:
         return False
+=======
+    def getPlayerBlind(self, playerSteamId:int, tick: int) -> bool:
+        return self.globalMatchContext.getPlayerBlindness(playerSteamId= playerSteamId, tick= tick)
+>>>>>>> Stashed changes
 
 
     #NOT IMPLEMENTED
@@ -243,12 +264,21 @@ class Fight:
         utilityDmgDone = self.getUtilityDamageDone()
         supportUtilityUsed = self.getSupportUtilityUsed()
         kdr = self.getPlayerKDR()
+<<<<<<< Updated upstream
+=======
+        isFlashed = self.getPlayerBlind(playerSteamId= self.playerSteamId, tick= tick)
+>>>>>>> Stashed changes
         isCrouched = self.getPlayerCrouched(playerTickData= playerTickData)
         isJumping = self.getPlayerJumped(playerTickData= playerTickData)
         isFiring = self.getPlayerFiring(tick= tick)
         
         self.setFeatures(rowData= rowData, featureName= "currentTick", featureValue= currentTick)
+<<<<<<< Updated upstream
         self.setFeatures(rowData= rowData, featureName= "playerId", featureValue= self.playerSteamId)
+=======
+        self.setFeatures(rowData= rowData, featureName= "playerId", featureValue= f"{self.playerSteamId} {playerTickData['name']}")
+        # self.setFeatures(rowData= rowData, featureName= "playerId", featureValue= self.playerSteamId)
+>>>>>>> Stashed changes
         self.setFeatures(rowData= rowData, featureName= ("X", "Y", "Z"), featureValue= (X, Y, Z))
         self.setFeatures(rowData= rowData, featureName= ("deltaX", "deltaY", "deltaZ"), featureValue= (deltaX, deltaY, deltaZ))
         self.setFeatures(rowData= rowData, featureName= ("yaw", "pitch"), featureValue= (yaw, pitch))
@@ -275,7 +305,11 @@ class Fight:
             weaponUsed = self.getUsedWeapon(targetHurtEvent= targetHurtEvent)
             weaponCategory = self.getWeaponCategory(weaponName= weaponUsed)
             isScoping = self.getPlayerScoping(playerTickData= playerTickData)
+<<<<<<< Updated upstream
             targetBlind = self.getPlayerBlind()
+=======
+            targetBlind = self.getPlayerBlind(playerSteamId= self.targetSteamId, tick= tick)
+>>>>>>> Stashed changes
             targetInSmoke = self.getSmokeInVision()
             targetReturnedDmg = self.getReturnedDamge()
 

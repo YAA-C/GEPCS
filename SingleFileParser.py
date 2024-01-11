@@ -2,8 +2,10 @@ import os
 import pandas as pd
 import random
 from parseLib.CustomDemoParser import CustomDemoParser
+from parseLib.GlobalMatchContext import GlobalMatchContext
 from parseLib.PlayerMatchContext import PlayerMatchContext
 from parseLib.Fight import Fight
+
 
 class SingleFileParser:
     def __init__(self, fileName = "test.dem"):
@@ -12,6 +14,8 @@ class SingleFileParser:
         self.file = os.path.join(dirname, f'DemoFiles\\Demos\\{fileName}')
         self.parser = CustomDemoParser(targetFile = self.file)
         result = self.parser.parseFile()
+        self.globalMatchContextObj: GlobalMatchContext = GlobalMatchContext(self.parser)
+        self.globalMatchContextObj.loadContextData()
 
         if not result:
             print(f"Cannot Parse : {self.file}")
@@ -21,6 +25,14 @@ class SingleFileParser:
     def start(self):
         dfRows = []
         completedCount = 0
+<<<<<<< Updated upstream
+=======
+        label = False
+        
+        for playerSteamId in self.parser.players:
+            playerMatchContextObj: PlayerMatchContext = PlayerMatchContext(self.parser, playerSteamId)
+            playerMatchContextObj.generateWeaponFireTicks()
+>>>>>>> Stashed changes
 
         label = False
         for playerSteamId in self.parser.players:
@@ -46,7 +58,12 @@ class SingleFileParser:
                         intervalStartTick= intervalStart, 
                         intervalEndTick= intervalEnd, 
                         parser= self.parser, 
+<<<<<<< Updated upstream
                         matchContextObj= matchContextObj,
+=======
+                        globalMatchContextObj= self.globalMatchContextObj,
+                        playerMatchContextObj= playerMatchContextObj,
+>>>>>>> Stashed changes
                         playerSteamId= playerSteamId,
                         targetSteamId= targetSteamId,
                         label= label,
