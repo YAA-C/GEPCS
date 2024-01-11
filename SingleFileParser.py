@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import random
 from parseLib.CustomDemoParser import CustomDemoParser
+from parseLib.GlobalMatchContext import GlobalMatchContext
 from parseLib.PlayerMatchContext import PlayerMatchContext
 from parseLib.Fight import Fight
 
@@ -12,6 +13,8 @@ class SingleFileParser:
         self.file = os.path.join(dirname, f'DemoFiles\\Demos\\{fileName}')
         self.parser = CustomDemoParser(targetFile = self.file)
         result = self.parser.parseFile()
+        self.globalMatchContextObj: GlobalMatchContext = GlobalMatchContext(self.parser)
+        self.globalMatchContextObj.loadContextData()
 
         if not result:
             print(f"Cannot Parse : {self.file}")
@@ -26,7 +29,6 @@ class SingleFileParser:
         for playerSteamId in self.parser.players:
             playerMatchContextObj: PlayerMatchContext = PlayerMatchContext(self.parser, playerSteamId)
             playerMatchContextObj.generateWeaponFireTicks()
-            playerMatchContextObj.generatePlayerFlashedIntervals()
 
             for targetSteamId in self.parser.allPlayers:
                 if playerSteamId == targetSteamId:
@@ -47,6 +49,7 @@ class SingleFileParser:
                         intervalStartTick= intervalStart, 
                         intervalEndTick= intervalEnd, 
                         parser= self.parser, 
+                        globalMatchContextObj= self.globalMatchContextObj,
                         playerMatchContextObj= playerMatchContextObj,
                         playerSteamId= playerSteamId,
                         targetSteamId= targetSteamId,
