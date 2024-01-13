@@ -2,6 +2,7 @@ import os
 import pandas as pd
 import random
 from parseLib.CustomDemoParser import CustomDemoParser
+from parseLib.GlobalMatchContext import GlobalMatchContext
 from parseLib.PlayerMatchContext import PlayerMatchContext
 from parseLib.Fight import Fight
 
@@ -12,6 +13,8 @@ class SingleFileParser:
         self.file = os.path.join(dirname, f'DemoFiles\\Demos\\{fileName}')
         self.parser = CustomDemoParser(targetFile = self.file)
         result = self.parser.parseFile()
+        self.globalMatchContextObj: GlobalMatchContext = GlobalMatchContext(self.parser)
+        self.globalMatchContextObj.loadContextData()
 
         if not result:
             print(f"Cannot Parse : {self.file}")
@@ -21,19 +24,19 @@ class SingleFileParser:
     def start(self):
         dfRows = []
         completedCount = 0
-
         label = False
+        
         for playerSteamId in self.parser.players:
+            playerMatchContextObj: PlayerMatchContext = PlayerMatchContext(self.parser, playerSteamId)
+            playerMatchContextObj.generateWeaponFireTicks()
+
             for targetSteamId in self.parser.allPlayers:
                 if playerSteamId == targetSteamId:
                     continue
 
-                matchContextObj: PlayerMatchContext = PlayerMatchContext(self.parser, playerSteamId, targetSteamId)
-                matchContextObj.generatePlayerHurtIntervals()
-                matchContextObj.generateWeaponFireTicks()
-                tickIntervals = matchContextObj.hurtIntervals
+                playerMatchContextObj.updateTarget(targetSteamId= targetSteamId)
+                tickIntervals = playerMatchContextObj.hurtIntervals
 
-                # print(player)
                 if(len(tickIntervals) == 0):
                     continue
 
@@ -46,7 +49,8 @@ class SingleFileParser:
                         intervalStartTick= intervalStart, 
                         intervalEndTick= intervalEnd, 
                         parser= self.parser, 
-                        matchContextObj= matchContextObj,
+                        globalMatchContextObj= self.globalMatchContextObj,
+                        playerMatchContextObj= playerMatchContextObj,
                         playerSteamId= playerSteamId,
                         targetSteamId= targetSteamId,
                         label= label,
