@@ -200,14 +200,12 @@ class Fight:
         return 0
     
 
-    #NOT IMPLEMENTED
-    def getUtilityDamageDone(self) -> int:
-        return 0
+    def getUtilityDamageDone(self, tick: int) -> int:
+        return self.globalMatchContext.getPlayerDamageDoneTillTick(playerSteamId= self.playerSteamId, tick= tick)
 
 
-    #NOT IMPLEMENTED
-    def getSupportUtilityUsed(self) -> int:
-        return 0
+    def getSupportUtilityUsed(self, tick: int) -> int:
+        return self.globalMatchContext.getPlayerSupportDoneTillTick(playerSteamId= self.playerSteamId, tick= tick)
 
 
     #NOT IMPLEMENTED
@@ -240,8 +238,8 @@ class Fight:
         deltaX, deltaY, deltaZ = self.getLocationDeltas(playerTickData= playerTickData)
         yaw, pitch = self.getPlayerViewAngles(playerTickData= playerTickData)
         deltaYaw, deltaPitch = self.getViewAngleDeltas(playerTickData= playerTickData)
-        utilityDmgDone = self.getUtilityDamageDone()
-        supportUtilityUsed = self.getSupportUtilityUsed()
+        utilityDmgDone = self.getUtilityDamageDone(tick= tick)
+        supportUtilityUsed = self.getSupportUtilityUsed(tick= tick)
         kdr = self.getPlayerKDR()
         isFlashed = self.getPlayerBlind(playerSteamId= self.playerSteamId, tick= tick)
         isCrouched = self.getPlayerCrouched(playerTickData= playerTickData)

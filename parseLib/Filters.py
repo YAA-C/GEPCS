@@ -47,10 +47,6 @@ class Filters:
         return [event for event in fireEvents if event['weapon'] in self.fireEventAllowedWeapons]
 
 
-    def filterHeGrenadeHurtEvents(self, hurtEvents: list) -> list:
-        return [event for event in hurtEvents if event['weapon'] == 'hegrenade']
-
-
     def filterPlayerHurtEvents(self, hurtEvents: list, playerSteamId: int, targetSteamId: int) -> list:
         return [event for event in hurtEvents if (event['attacker_steamid'] == playerSteamId and event['player_steamid'] == targetSteamId)]
     
@@ -69,3 +65,15 @@ class Filters:
 
     def filterHumanPlayers(self, players: list):
         return [player for player in players if (player > 76500000000000000 and player < 76600000000000000)]
+    
+
+    def filterDamageUtilityEvents(self, hurtEvents: list, forPlayerSteamId: int = None):
+        if forPlayerSteamId == None:        
+            return [event for event in hurtEvents if event["weapon"] in ("hegrenade", "inferno")]
+        return [event for event in hurtEvents if event["attacker_steamid"] == forPlayerSteamId]
+
+
+    def filterSupportUtilityEvents(self, fireEvents: list, forPlayerSteamId: int = None):
+        if forPlayerSteamId == None:
+            return [event for event in fireEvents if event["weapon"] in ("weapon_flashbang", "weapon_smokegrenade")]
+        return [event for event in fireEvents if event["player_steamid"] == forPlayerSteamId]
