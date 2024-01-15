@@ -18,6 +18,9 @@ class CustomDemoParser:
         self.hurtEvents: list = []
         self.fireEvents: list = []
         self.blindEvents: list = []
+        self.roundTicks: list = ()
+        self.damageUtilityEvents: list = []
+        self.supportUtilityEvents: list = []
 
 
     def parseFile(self) -> bool:
@@ -27,13 +30,14 @@ class CustomDemoParser:
 
             self.checkDemoConstraints()
             self.parsePlayerSteamIds()
+            self.parseRoundTicks()
             self.parsePlayerHurtEvents()
             self.parsePlayerFireEvents()
             self.fixHurtEventWeaponNames()
             self.parsePlayerBlindEvents()
             
             self.parsedDf.set_index(['tick','steamid'], inplace=True)
-            self.parsedDf = self.parsedDf.sort_index() 
+            self.parsedDf.sort_index(inplace= True) 
         except Exception as e:
             print(traceback.format_exc())
             return False
@@ -84,12 +88,16 @@ class CustomDemoParser:
     def parsePlayerHurtEvents(self) -> None:
         hurtEvents = self.parser.parse_events("player_hurt")
         hurtEvents = sorted(hurtEvents, key=lambda x: x['tick'])
+        damageUtilityEvents = Filters().filterDamageUtilityEvents(hurtEvents= hurtEvents)
+        self.damageUtilityEvents = sorted(damageUtilityEvents, key=lambda x: x['tick'])
         self.hurtEvents = Filters().filterWeaponHurtEvents(hurtEvents= hurtEvents)
 
 
     def parsePlayerFireEvents(self) -> None:
         fireEvents = self.parser.parse_events("weapon_fire")
         self.fireEvents = sorted(fireEvents, key=lambda x: x['tick'])
+        supportUtilityEvents = Filters().filterSupportUtilityEvents(fireEvents= fireEvents)
+        self.supportUtilityEvents = sorted(supportUtilityEvents, key=lambda x: x['tick'])
         self.fireEvents = Filters().filterWeaponFireEvents(fireEvents= fireEvents)
 
     
@@ -128,5 +136,11 @@ class CustomDemoParser:
 
     
     def parsePlayerBlindEvents(self) -> None:
-        playerBlindEvents = self.parser.parse_events("player_blind")
+        playerBlindEvents: list = self.parser.parse_events("player_blind")
         self.blindEvents = sorted(playerBlindEvents, key=lambda x: x['tick'])
+
+
+    def parseRoundTicks(self) -> None:
+        roundTicks: list = [0]
+        roundTicks.extend([int(round["tick"]) for round in self.parser.parse_events("round_freeze_end")])
+        self.roundTicks = sorted(roundTicks)
