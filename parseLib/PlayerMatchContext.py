@@ -35,10 +35,6 @@ class PlayerMatchContext:
         pass
 
 
-    def generatePlayerCrouchIntervals(self) -> None:
-        pass
-
-
     def mergeOverlappingIntervals(self, intervals: list) -> list:
         if len(intervals) == 0:
             return []
