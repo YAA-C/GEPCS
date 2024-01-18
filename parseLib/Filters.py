@@ -77,3 +77,11 @@ class Filters:
         if forPlayerSteamId == None:
             return [event for event in fireEvents if event["weapon"] in ("weapon_flashbang", "weapon_smokegrenade")]
         return [event for event in fireEvents if event["player_steamid"] == forPlayerSteamId]
+    
+    
+    def filterPlayerDeathEvents(self, deathEvents: list, playerSteamId: int):
+        return [event for event in deathEvents if event["player_steamid"] == playerSteamId]
+    
+
+    def filterPlayerKillEvents(self, deathEvents: list, playerSteamId: int):
+        return [event for event in deathEvents if event["attacker_steamid"] == playerSteamId]
