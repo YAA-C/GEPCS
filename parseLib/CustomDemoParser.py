@@ -17,6 +17,7 @@ class CustomDemoParser:
         self.players: list = []
         self.hurtEvents: list = []
         self.fireEvents: list = []
+        self.deathEvents: list = []
         self.blindEvents: list = []
         self.roundTicks: list = ()
         self.damageUtilityEvents: list = []
@@ -35,6 +36,7 @@ class CustomDemoParser:
             self.parsePlayerFireEvents()
             self.fixHurtEventWeaponNames()
             self.parsePlayerBlindEvents()
+            self.parsePlayerDeathEvents()
             
             self.parsedDf.set_index(['tick','steamid'], inplace=True)
             self.parsedDf.sort_index(inplace= True) 
@@ -144,3 +146,8 @@ class CustomDemoParser:
         roundTicks: list = [0]
         roundTicks.extend([int(round["tick"]) for round in self.parser.parse_events("round_freeze_end")])
         self.roundTicks = sorted(roundTicks)
+        
+
+    def parsePlayerDeathEvents(self) -> None:
+        playerDeathEvents: list = self.parser.parse_events("player_death")
+        self.deathEvents = sorted(playerDeathEvents, key=lambda x: x['tick'])

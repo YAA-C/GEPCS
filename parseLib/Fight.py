@@ -209,8 +209,8 @@ class Fight:
 
 
     #NOT IMPLEMENTED
-    def getPlayerKDR(self) -> float:
-        return 0
+    def getPlayerKDR(self, tick: int) -> float:
+        return self.globalMatchContext.getPlayerKDRTillTick(playerSteamId= self.playerSteamId, tick= tick)
 
 
     def setFeatures(self, rowData: list, featureName: object, featureValue: object) -> None:
@@ -240,7 +240,7 @@ class Fight:
         deltaYaw, deltaPitch = self.getViewAngleDeltas(playerTickData= playerTickData)
         utilityDmgDone = self.getUtilityDamageDone(tick= tick)
         supportUtilityUsed = self.getSupportUtilityUsed(tick= tick)
-        kdr = self.getPlayerKDR()
+        kdr = self.getPlayerKDR(tick= tick)
         isFlashed = self.getPlayerBlind(playerSteamId= self.playerSteamId, tick= tick)
         isCrouched = self.getPlayerCrouched(playerTickData= playerTickData)
         isJumping = self.getPlayerJumped(playerTickData= playerTickData)
