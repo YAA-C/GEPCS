@@ -208,7 +208,6 @@ class Fight:
         return self.globalMatchContext.getPlayerSupportDoneTillTick(playerSteamId= self.playerSteamId, tick= tick)
 
 
-    #NOT IMPLEMENTED
     def getPlayerKDR(self, tick: int) -> float:
         return self.globalMatchContext.getPlayerKDRTillTick(playerSteamId= self.playerSteamId, tick= tick)
 
