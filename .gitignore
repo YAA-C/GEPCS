@@ -11,3 +11,7 @@ DemoFiles/Demos/*
 !DemoFiles/Demos/.gitkeep
 
 /logs/logs*.txt
+
+/*/.ipynb_checkpoints
+/*/cheating.csv
+/*/professional.csv
