@@ -5,6 +5,8 @@ import traceback
 
 
 def startFunc(filePath):
+    from parseLib import Logger
+    Logger.setProcessName(filePath)
     print(f"Starting - {filePath}")
     try:
         singleFileParser = SingleFileParser(filePath)
@@ -16,8 +18,10 @@ def startFunc(filePath):
 
 
 def startMp(filePaths):
-    with multiprocessing.Pool(processes=8) as pool:
+    with multiprocessing.Pool(processes=5) as pool:
         pool.map(startFunc, filePaths)
+    from parseLib.Logger import compileLogs
+    compileLogs(filePaths)
 
 
 if __name__ == "__main__":

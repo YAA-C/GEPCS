@@ -5,6 +5,7 @@ from parseLib.CustomDemoParser import CustomDemoParser
 from parseLib.GlobalMatchContext import GlobalMatchContext
 from parseLib.PlayerMatchContext import PlayerMatchContext
 from parseLib.Fight import Fight
+from parseLib.Logger import log
 
 class SingleFileParser:
     def __init__(self, fileName = "test.dem"):
@@ -24,7 +25,7 @@ class SingleFileParser:
     def start(self):
         dfRows = []
         completedCount = 0
-        label = False
+        label = True
         
         for playerSteamId in self.parser.players:
             playerMatchContextObj: PlayerMatchContext = PlayerMatchContext(self.parser, playerSteamId)
@@ -57,8 +58,7 @@ class SingleFileParser:
                         dfRows= dfRows
                     ).buildFight()
 
-        with open(f"./logs/logs.txt", '+a') as f:
-            f.write(f"{completedCount}\n")
+        log(f"Parsed Fights:", completedCount)
 
         columns = Fight.features
         mainDf:pd.DataFrame = pd.DataFrame(data=dfRows, columns=columns)

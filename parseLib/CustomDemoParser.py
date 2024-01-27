@@ -1,7 +1,7 @@
 from demoparser import DemoParser
 import pandas as pd
 import traceback
-from pprint import pprint
+from .Logger import log, logp
 from .Filters import Filters
 
 class CustomDemoParser:
@@ -41,7 +41,7 @@ class CustomDemoParser:
             self.parsedDf.set_index(['tick','steamid'], inplace=True)
             self.parsedDf.sort_index(inplace= True) 
         except Exception as e:
-            print(traceback.format_exc())
+            log(traceback.format_exc(), tag="ERROR")
             return False
         return True
 
@@ -67,8 +67,8 @@ class CustomDemoParser:
         tickratePercentage: float = tickrate * 100.00 / 128.00
         snapshotRatePercentage: float = averageSnapshotRate * 100.00 / 128.00
         
-        print(f"TickRate {tickrate:.3f} --> {tickratePercentage:.3f} %")
-        print(f"Average SnapshopRate {averageSnapshotRate:.3f} --> {snapshotRatePercentage:.3f} %")
+        log(f"TickRate {tickrate:.3f} --> {tickratePercentage:.3f} %")
+        log(f"Average SnapshopRate {averageSnapshotRate:.3f} --> {snapshotRatePercentage:.3f} %")
 
         assert (tickratePercentage >= 80.00 and tickratePercentage <= 110.00), "Tickrate is not proper"
         assert (snapshotRatePercentage >= 80.00 and snapshotRatePercentage <= 110.00), "Snapshotrate is not proper"
@@ -83,8 +83,8 @@ class CustomDemoParser:
         for i in self.allPlayers:
             tmp = self.parsedDf.loc[self.parsedDf['steamid'] == i]
             x.append({f'id_{i}': tmp.iloc[0, len(self.props) + 2]})
-        pprint(x)
-        print("After filtering : ", self.players)
+        logp(x)
+        log("After filtering : ", self.players)
 
 
     def parsePlayerHurtEvents(self) -> None:

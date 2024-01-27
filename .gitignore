@@ -10,7 +10,7 @@ DemoFiles/Demos/*
 !DemoFiles/csv/.gitkeep
 !DemoFiles/Demos/.gitkeep
 
-/logs/logs*.txt
+/logs/*
 
 /*/.ipynb_checkpoints
 /*/cheating.csv
