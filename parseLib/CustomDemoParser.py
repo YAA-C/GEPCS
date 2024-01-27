@@ -14,6 +14,8 @@ class CustomDemoParser:
         ]
         self.targetFile = targetFile
         self.parsedDf: pd.DataFrame
+        self.allPlayers: list = []
+        self.allPlayersTeams: dict = dict()
         self.players: list = []
         self.hurtEvents: list = []
         self.fireEvents: list = []
@@ -31,6 +33,7 @@ class CustomDemoParser:
 
             self.checkDemoConstraints()
             self.parsePlayerSteamIds()
+            self.parsePlayerTeams()
             self.parseRoundTicks()
             self.parsePlayerHurtEvents()
             self.parsePlayerFireEvents()
@@ -85,6 +88,11 @@ class CustomDemoParser:
             x.append({f'id_{i}': tmp.iloc[0, len(self.props) + 2]})
         logp(x)
         log("After filtering : ", self.players)
+
+
+    def parsePlayerTeams(self) -> None:
+        for playerData in self.parser.parse_players():
+            self.allPlayersTeams[playerData["steamid"]] = playerData["starting_side"]
 
 
     def parsePlayerHurtEvents(self) -> None:

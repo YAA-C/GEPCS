@@ -68,7 +68,7 @@ class Filters:
     
 
     def filterDamageUtilityEvents(self, hurtEvents: list, forPlayerSteamId: int = None):
-        if forPlayerSteamId == None:        
+        if forPlayerSteamId == None:
             return [event for event in hurtEvents if event["weapon"] in ("hegrenade", "inferno")]
         return [event for event in hurtEvents if event["attacker_steamid"] == forPlayerSteamId]
 
