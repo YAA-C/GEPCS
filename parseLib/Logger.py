@@ -18,6 +18,9 @@ def compileLogs(ProcessList: list) -> None:
     logLines = []
     for processName in ProcessList:
         logFilePath = f"{LOGDIR}{processName}-log.log"
+        if not os.path.isfile(logFilePath):
+            # parsing stopped in the middle and this file never exists OR there are no logs for this file.
+            continue
         with open(logFilePath, "r") as file:
             logLines.extend(file.readlines())
         filePath = os.path.join(os.getcwd(), logFilePath)

@@ -1,9 +1,10 @@
 import pandas as pd
-from .CustomMath import eularDistance
+from .CustomMath import UnitVector, eularDistance, getArcLength
 from .GlobalMatchContext import GlobalMatchContext
 from .PlayerMatchContext import PlayerMatchContext
 from .CustomDemoParser import CustomDemoParser
 from .Filters import Filters
+from .Logger import logp, log
 
 
 class Fight:
@@ -66,6 +67,27 @@ class Fight:
             self.featureNameToIndex[featureName] = i
         self.minTick: int = -1
         self.prevValueDict: dict = dict()
+        self.curValueDict: dict = dict()
+        self.generateDistances()
+        self.currentDistanceIndex: int = 0
+        
+
+    def generateDistances(self) -> None:
+        self.precomputedDistances: list = []
+        for tick in range(self.intervalStartTick, self.intervalEndTick + 1):
+            if tick not in self.playerMatchContextObj.hurtTicks:
+                continue
+
+            playerTickData = self.getByIndex(self.parser.parsedDf, (tick, self.playerSteamId)).iloc[0, :]
+            targetTickData = self.getByIndex(self.parser.parsedDf, (tick, self.targetSteamId)).iloc[0, :]
+            playerX, playerY, playerZ = self.getPlayerLocation(playerTickData= playerTickData)
+            targetX, targetY, targetZ = self.getPlayerLocation(playerTickData= targetTickData)
+
+            distance = eularDistance(X= (playerX, playerY, playerZ), Y= (targetX, targetY, targetZ))
+            self.precomputedDistances.append({
+                "tick": tick,
+                "distance": distance
+            })
 
     
     def getByIndex(self, df: pd.DataFrame, index: tuple[int]) -> pd.DataFrame:
@@ -77,11 +99,11 @@ class Fight:
     def convertViewAngleToLinearDelta(self, circularAngle: float, angleName: str):
         linearAngleDelta = 0
 
-        if angleName == 'prevPitch':
+        if angleName == 'Pitch':
             if angleName in self.prevValueDict:
                 linearAngleDelta = circularAngle - self.prevValueDict[angleName]
                 
-        elif angleName == 'prevYaw':
+        elif angleName == 'Yaw':
             if angleName in self.prevValueDict:
                 distance = abs(circularAngle - self.prevValueDict[angleName])
                 circularDistance = 360 - distance
@@ -90,7 +112,7 @@ class Fight:
                 else:
                     linearAngleDelta = circularDistance if (circularAngle < self.prevValueDict[angleName]) else -circularDistance
         
-        self.prevValueDict[angleName] = circularAngle
+        self.curValueDict[angleName] = circularAngle
         return linearAngleDelta
     
 
@@ -112,14 +134,14 @@ class Fight:
         X, Y, Z = self.getPlayerLocation(playerTickData= playerTickData)
         deltaX, deltaY, deltaZ = 0, 0, 0
 
-        if('prevX' in self.prevValueDict):
-            deltaX = X - self.prevValueDict['prevX']
-            deltaY = Y - self.prevValueDict['prevY']
-            deltaZ = Z - self.prevValueDict['prevZ']
+        if('X' in self.prevValueDict):
+            deltaX = X - self.prevValueDict['X']
+            deltaY = Y - self.prevValueDict['Y']
+            deltaZ = Z - self.prevValueDict['Z']
             
-        self.prevValueDict['prevX'] = X
-        self.prevValueDict['prevY'] = Y
-        self.prevValueDict['prevZ'] = Z
+        self.curValueDict['X'] = X
+        self.curValueDict['Y'] = Y
+        self.curValueDict['Z'] = Z
         return (deltaX, deltaY, deltaZ)
 
 
@@ -134,9 +156,28 @@ class Fight:
 
     def getViewAngleDeltas(self, playerTickData: pd.Series) -> tuple:
         yaw, pitch = self.getPlayerViewAngles(playerTickData= playerTickData)
-        deltaYaw = self.convertViewAngleToLinearDelta(circularAngle= yaw, angleName= 'prevYaw')
-        deltaPitch = self.convertViewAngleToLinearDelta(circularAngle= pitch, angleName= 'prevPitch')
+        deltaYaw = self.convertViewAngleToLinearDelta(circularAngle= yaw, angleName= 'Yaw')
+        deltaPitch = self.convertViewAngleToLinearDelta(circularAngle= pitch, angleName= 'Pitch')
         return (deltaYaw, deltaPitch)
+
+
+    def getViewAngleDeltaAimArc(self, playerTickData: pd.Series, tick: int) -> float:
+        if 'Yaw' not in self.prevValueDict:
+            # First tick of fight
+            return 0.0
+        
+        prevYaw: float = self.prevValueDict['Yaw']
+        prevPitch: float = self.prevValueDict['Pitch'] + 90.0   #Pitch is in -90 to +90, we need it in 0 to 180
+        yaw, pitch = self.getPlayerViewAngles(playerTickData= playerTickData)
+        pitch += 90.0   #Pitch is in -90 to +90, we need it in 0 to 180
+        distanceToTarget: float = self.precomputedDistances[self.currentDistanceIndex]["distance"]
+        prevVector: UnitVector = UnitVector(prevYaw, prevPitch)
+        curVector: UnitVector = UnitVector(yaw, pitch)
+        if self.precomputedDistances[self.currentDistanceIndex]["tick"] == tick:
+            # completed partial arc, goto next partial arc
+            self.currentDistanceIndex += 1
+
+        return getArcLength(distanceToTarget, prevVector, curVector)
 
 
     def getPlayerCrouched(self, playerTickData: pd.Series) -> int:
@@ -234,6 +275,7 @@ class Fight:
         deltaX, deltaY, deltaZ = self.getLocationDeltas(playerTickData= playerTickData)
         yaw, pitch = self.getPlayerViewAngles(playerTickData= playerTickData)
         deltaYaw, deltaPitch = self.getViewAngleDeltas(playerTickData= playerTickData)
+        deltaAimArc = self.getViewAngleDeltaAimArc(playerTickData= playerTickData, tick= tick)
         utilityDmgDone = self.getUtilityDamageDone(tick= tick)
         supportUtilityUsed = self.getSupportUtilityUsed(tick= tick)
         kdr = self.getPlayerKDR(tick= tick)
@@ -249,7 +291,7 @@ class Fight:
         self.setFeatures(rowData= rowData, featureName= ("deltaX", "deltaY", "deltaZ"), featureValue= (deltaX, deltaY, deltaZ))
         self.setFeatures(rowData= rowData, featureName= ("yaw", "pitch"), featureValue= (yaw, pitch))
         self.setFeatures(rowData= rowData, featureName= ("deltaYaw", "deltaPitch"), featureValue= (deltaYaw, deltaPitch))
-        self.setFeatures(rowData= rowData, featureName= "deltaAimArc", featureValue= 0)
+        self.setFeatures(rowData= rowData, featureName= "deltaAimArc", featureValue= deltaAimArc)
         self.setFeatures(rowData= rowData, featureName= "isFlashed", featureValue= isFlashed)
         self.setFeatures(rowData= rowData, featureName= "isCrouching", featureValue= isCrouched)
         self.setFeatures(rowData= rowData, featureName= "isJumping", featureValue= isJumping)
@@ -289,6 +331,8 @@ class Fight:
             self.setFeatures(rowData= rowData, featureName= "targetReturnedDmg", featureValue= targetReturnedDmg)
         
         self.setFeatures(rowData= rowData, featureName= "Label", featureValue= str(self.label))
+        self.prevValueDict = self.curValueDict.copy()  # Make current values prevValues for next tick
+        
         return rowData
     
 
