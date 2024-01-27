@@ -9,6 +9,7 @@ class Fight:
     features: list = [
         "currentTick", 
         "playerId",
+        "playerName",
         "X", "Y", "Z",
         "deltaX", "deltaY", "deltaZ",  
         "yaw", "pitch", 
@@ -23,6 +24,7 @@ class Fight:
         "isFiring",
 
         "targetId",
+        "targetName",
         "targetX", "targetY", "targetZ",
         "targetDeltaX", "targetDeltaY", "targetDeltaZ",
         "dmgDone", 
@@ -246,8 +248,8 @@ class Fight:
         isFiring = self.getPlayerFiring(tick= tick)
         
         self.setFeatures(rowData= rowData, featureName= "currentTick", featureValue= currentTick)
-        # self.setFeatures(rowData= rowData, featureName= "playerId", featureValue= f"{self.playerSteamId} {playerTickData['name']}")
         self.setFeatures(rowData= rowData, featureName= "playerId", featureValue= self.playerSteamId)
+        self.setFeatures(rowData= rowData, featureName= "playerName", featureValue= playerTickData["name"])
         self.setFeatures(rowData= rowData, featureName= ("X", "Y", "Z"), featureValue= (X, Y, Z))
         self.setFeatures(rowData= rowData, featureName= ("deltaX", "deltaY", "deltaZ"), featureValue= (deltaX, deltaY, deltaZ))
         self.setFeatures(rowData= rowData, featureName= ("yaw", "pitch"), featureValue= (yaw, pitch))
@@ -279,6 +281,7 @@ class Fight:
             targetReturnedDmg = self.getReturnedDamge()
 
             self.setFeatures(rowData= rowData, featureName= "targetId", featureValue= self.targetSteamId)
+            self.setFeatures(rowData= rowData, featureName= "targetName", featureValue= targetTickData["name"])
             self.setFeatures(rowData= rowData, featureName= ("targetX", "targetY", "targetZ"), featureValue= (targetX, targetY, targetZ))
             self.setFeatures(rowData= rowData, featureName= ("targetDeltaX", "targetDeltaY", "targetDeltaZ"), featureValue= (targetDeltaX, targetDeltaY, targetDeltaZ))
             self.setFeatures(rowData= rowData, featureName= "dmgDone", featureValue= dmgDone)

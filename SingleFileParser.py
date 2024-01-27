@@ -28,11 +28,13 @@ class SingleFileParser:
         label = True
         
         for playerSteamId in self.parser.players:
+            playerTeam: str = self.parser.allPlayersTeams[playerSteamId]
             playerMatchContextObj: PlayerMatchContext = PlayerMatchContext(self.parser, playerSteamId)
             playerMatchContextObj.generateWeaponFireTicks()
 
             for targetSteamId in self.parser.allPlayers:
-                if playerSteamId == targetSteamId:
+                targetTeam: str = self.parser.allPlayersTeams[targetSteamId]
+                if (playerSteamId == targetSteamId) or (playerTeam == targetTeam):
                     continue
 
                 playerMatchContextObj.updateTarget(targetSteamId= targetSteamId)
@@ -63,4 +65,5 @@ class SingleFileParser:
         columns = Fight.features
         mainDf:pd.DataFrame = pd.DataFrame(data=dfRows, columns=columns)
         savePath = os.path.join(os.path.dirname(__file__), f'DemoFiles\\csv\\{self.fileName[:-4]}-{random.randint(99999, 999999)}.csv')
+        log("Saved file CSV Output to:", savePath)
         mainDf.to_csv(savePath, index= False)
