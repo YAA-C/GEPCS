@@ -5,6 +5,7 @@ from .PlayerMatchContext import PlayerMatchContext
 from .CustomDemoParser import CustomDemoParser
 from .Filters import Filters
 
+
 class Fight:
     features: list = [
         "currentTick", 
@@ -30,7 +31,6 @@ class Fight:
         "dmgDone", 
         "distToTarget", 
         "targetHitArea", 
-        "penetratedObject", 
         "weaponUsed",
         "weaponCategory",
         "isScoping",
@@ -171,11 +171,6 @@ class Fight:
         return int(targetHurtEvent["hitgroup"])
 
 
-    #NOT IMPLEMENTED
-    def getShotPenetrated(self) -> int:
-        return 0
-
-
     def getUsedWeapon(self, targetHurtEvent: dict) -> str:
         return targetHurtEvent["weapon"]
 
@@ -203,15 +198,15 @@ class Fight:
     
 
     def getUtilityDamageDone(self, tick: int) -> int:
-        return self.globalMatchContext.getPlayerDamageDoneTillTick(playerSteamId= self.playerSteamId, tick= tick)
+        return self.playerMatchContextObj.getPlayerDamageDoneTillTick(tick= tick)
 
 
     def getSupportUtilityUsed(self, tick: int) -> int:
-        return self.globalMatchContext.getPlayerSupportDoneTillTick(playerSteamId= self.playerSteamId, tick= tick)
+        return self.playerMatchContextObj.getPlayerSupportDoneTillTick(tick= tick)
 
 
     def getPlayerKDR(self, tick: int) -> float:
-        return self.globalMatchContext.getPlayerKDRTillTick(playerSteamId= self.playerSteamId, tick= tick)
+        return self.playerMatchContextObj.getPlayerKDRTillTick(tick= tick)
 
 
     def setFeatures(self, rowData: list, featureName: object, featureValue: object) -> None:
@@ -272,7 +267,6 @@ class Fight:
             dmgDone = self.getTargetTotalDamage(targetHurtEvent= targetHurtEvent)
             distToTarget = self.getDistanceToTarget((targetX, targetY, targetZ), (X, Y, Z))
             targetHitArea = self.getTargetHitSpot(targetHurtEvent= targetHurtEvent)
-            penetrated = self.getShotPenetrated()
             weaponUsed = self.getUsedWeapon(targetHurtEvent= targetHurtEvent)
             weaponCategory = self.getWeaponCategory(weaponName= weaponUsed)
             isScoping = self.getPlayerScoping(playerTickData= playerTickData)
@@ -287,7 +281,6 @@ class Fight:
             self.setFeatures(rowData= rowData, featureName= "dmgDone", featureValue= dmgDone)
             self.setFeatures(rowData= rowData, featureName= "distToTarget", featureValue= distToTarget)
             self.setFeatures(rowData= rowData, featureName= "targetHitArea", featureValue= targetHitArea)
-            self.setFeatures(rowData= rowData, featureName= "penetratedObject", featureValue= penetrated)
             self.setFeatures(rowData= rowData, featureName= "weaponUsed", featureValue= weaponUsed)
             self.setFeatures(rowData= rowData, featureName= "weaponCategory", featureValue= weaponCategory)
             self.setFeatures(rowData= rowData, featureName= "isScoping", featureValue= isScoping)

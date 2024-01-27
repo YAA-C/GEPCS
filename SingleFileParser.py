@@ -30,7 +30,6 @@ class SingleFileParser:
         for playerSteamId in self.parser.players:
             playerTeam: str = self.parser.allPlayersTeams[playerSteamId]
             playerMatchContextObj: PlayerMatchContext = PlayerMatchContext(self.parser, playerSteamId)
-            playerMatchContextObj.generateWeaponFireTicks()
 
             for targetSteamId in self.parser.allPlayers:
                 targetTeam: str = self.parser.allPlayersTeams[targetSteamId]

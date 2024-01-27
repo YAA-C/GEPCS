@@ -6,12 +6,14 @@ import traceback
 
 def startFunc(filePath):
     from parseLib import Logger
+    from parseLib.Logger import log
     Logger.setProcessName(filePath)
     print(f"Starting - {filePath}")
     try:
         singleFileParser = SingleFileParser(filePath)
         singleFileParser.start()
     except Exception:
+        log(traceback.format_exc())
         print(traceback.format_exc())
     else:
         print(f"Completed - {filePath}")
