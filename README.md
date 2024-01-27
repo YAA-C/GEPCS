@@ -25,4 +25,10 @@ Enable environment
 
 ~~~bash  
 ./venv/Scripts/activate
+~~~
+
+Run Parser  
+
+~~~bash  
+py ./main.py
 ~~~  
