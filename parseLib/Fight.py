@@ -77,9 +77,10 @@ class Fight:
         for tick in range(self.intervalStartTick, self.intervalEndTick + 1):
             if tick not in self.playerMatchContextObj.hurtTicks:
                 continue
+            
+            playerTickData: pd.Series = self.getByIndex(self.parser.parsedDf, (tick, self.playerSteamId))
+            targetTickData: pd.Series = self.getByIndex(self.parser.parsedDf, (tick, self.targetSteamId))
 
-            playerTickData = self.getByIndex(self.parser.parsedDf, (tick, self.playerSteamId)).iloc[0, :]
-            targetTickData = self.getByIndex(self.parser.parsedDf, (tick, self.targetSteamId)).iloc[0, :]
             playerX, playerY, playerZ = self.getPlayerLocation(playerTickData= playerTickData)
             targetX, targetY, targetZ = self.getPlayerLocation(playerTickData= targetTickData)
 
@@ -92,7 +93,10 @@ class Fight:
     
     def getByIndex(self, df: pd.DataFrame, index: tuple[int]) -> pd.DataFrame:
         if index in df.index:
-            return df.loc[index]
+            data: pd.Series | pd.DataFrame = df.loc[index]
+            if type(data) == pd.Series:
+                return data
+            return data.iloc[0, :]
         return pd.DataFrame()
 
     
@@ -261,13 +265,12 @@ class Fight:
 
     def buildFightTick(self, tick: int) -> list:
         rowData = [""] * len(Fight.features)
-        playerTickData = self.getByIndex(self.parser.parsedDf, (tick, self.playerSteamId))
+        playerTickData: pd.Series = self.getByIndex(self.parser.parsedDf, (tick, self.playerSteamId))
         if(len(playerTickData) == 0):
             return list()   # Skipped tick
         else:
             if self.minTick == -1:
                 self.minTick = tick
-            playerTickData: pd.Series = playerTickData.iloc[0, :]
 
         # currentTick = tick
         currentTick = tick - self.minTick
@@ -302,7 +305,7 @@ class Fight:
 
         if(tick in self.playerMatchContextObj.hurtTicks):
             targetHurtEvent = self.playerMatchContextObj.hurtTicks[tick]
-            targetTickData = self.getByIndex(self.parser.parsedDf, (tick, targetHurtEvent["player_steamid"])).iloc[0, :] 
+            targetTickData: pd.Series = self.getByIndex(self.parser.parsedDf, (tick, targetHurtEvent["player_steamid"])) 
 
             targetX, targetY, targetZ = self.getPlayerLocation(playerTickData= targetTickData)
             targetDeltaX, targetDeltaY, targetDeltaZ = self.getLocationDeltas(playerTickData= targetTickData)

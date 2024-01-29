@@ -101,6 +101,7 @@ class CustomDemoParser:
         damageUtilityEvents = Filters().filterDamageUtilityEvents(hurtEvents= hurtEvents)
         self.damageUtilityEvents = sorted(damageUtilityEvents, key=lambda x: x['tick'])
         self.hurtEvents = Filters().filterWeaponHurtEvents(hurtEvents= hurtEvents)
+        log([x['tick'] for x in self.hurtEvents])
 
 
     def parsePlayerFireEvents(self) -> None:
