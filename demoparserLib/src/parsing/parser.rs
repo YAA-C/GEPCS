@@ -66,6 +66,7 @@ pub fn read_file(demo_path: String) -> Result<BytesVariant, std::io::Error> {
 
 pub struct Demo {
     pub fp: usize,
+    pub prev_tick: i32,
     pub tick: i32,
     pub cmd: u8,
     pub bytes: BytesVariant,
@@ -141,6 +142,7 @@ impl Demo {
                 bytes: data,
                 fp: 0,
                 cmd: 0,
+                prev_tick: -1,
                 tick: 0,
                 round: 0,
                 event_list: None,
@@ -216,7 +218,8 @@ impl Demo {
             if self.parse_props {
                 Demo::collect_player_data(
                     &self.players,
-                    &self.tick,
+                    &mut self.prev_tick,
+                    &mut self.tick,
                     &self.wanted_ticks,
                     &self.wanted_players,
                     &mut self.entities,

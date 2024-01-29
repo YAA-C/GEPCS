@@ -13,5 +13,5 @@ DemoFiles/Demos/*
 /logs/*
 
 /*/.ipynb_checkpoints
-/*/cheating.csv
-/*/professional.csv
+
+/DemoFiles/*.*

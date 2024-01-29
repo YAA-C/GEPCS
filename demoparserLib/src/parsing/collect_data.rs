@@ -254,7 +254,8 @@ impl Demo {
     #[inline(always)]
     pub fn collect_player_data(
         players: &HashMap<u64, UserInfo, RandomState>,
-        tick: &i32,
+        prev_tick: &mut i32,
+        tick: &mut i32,
         wanted_ticks: &HashSet<i32, RandomState>,
         wanted_players: &Vec<u64>,
         entities: &mut Vec<(u32, Entity)>,
@@ -266,6 +267,7 @@ impl Demo {
         round: i32,
         rules_id: Option<u32>,
     ) {
+        let mut valid_tick: bool = false;
         // Collect wanted props from players
         for player in players.values() {
             // if player.xuid == 0 || player.name == "GOTV" {
@@ -358,17 +360,30 @@ impl Demo {
                                 }
                             }
                         }
+                        
+                        if *prev_tick == -1 {
+                            // This will only run ones and set the appropriate previous tick
+                            *prev_tick = *tick - 1;
+                        }
+                        
+                        valid_tick = true;
+
                         // Insert tick, steamid, name
                         insert_metadata(
                             player.name.clone(),
-                            *tick,
+                            *prev_tick,
                             player.xuid,
                             ticks_props,
                             playback_frames,
-                        )
+                        );
                     }
                 }
             }
+        }
+
+        // Update the prev_tick for next tick
+        if valid_tick {
+            *prev_tick = *tick;
         }
     }
 }
