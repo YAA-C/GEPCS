@@ -255,7 +255,7 @@ impl Demo {
     pub fn collect_player_data(
         players: &HashMap<u64, UserInfo, RandomState>,
         prev_tick: &mut i32,
-        tick: &mut i32,
+        tick: &i32,
         wanted_ticks: &HashSet<i32, RandomState>,
         wanted_players: &Vec<u64>,
         entities: &mut Vec<(u32, Entity)>,

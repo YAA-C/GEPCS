@@ -219,7 +219,7 @@ impl Demo {
                 Demo::collect_player_data(
                     &self.players,
                     &mut self.prev_tick,
-                    &mut self.tick,
+                    &self.tick,
                     &self.wanted_ticks,
                     &self.wanted_players,
                     &mut self.entities,
