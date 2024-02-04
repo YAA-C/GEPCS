@@ -1,5 +1,6 @@
-from math import sqrt
+import math
 from functools import cache
+    
 
 class BezierCurve:
     def __init__(self, controlPoints) -> None:
@@ -47,10 +48,62 @@ class BezierCurve:
             else:
                 right = mid
         return left
+
+
+class UnitVector:
+    def __init__(self, yaw: float, pitch: float) -> None:
+        assert (yaw >= 0 and yaw <= 360), "Yaw should be between 0 and 360 degrees"
+        assert (pitch >= 0 and pitch <= 180), "Pitch should be between 0 and 180 degrees"
+        yaw = math.radians(yaw)
+        pitch = math.radians(pitch)
+        x: float = math.sin(pitch) * math.cos(yaw)
+        y: float = math.sin(pitch) * math.sin(yaw)
+        z: float = math.cos(pitch)
+        self.vector: list = [x, y, z]
+
+
+    def getLength(self) -> float:
+        return 1.0
     
+
+    def __repr__(self) -> str:
+        return f"[{self.vector[0]} {self.vector[1]} {self.vector[2]}]"
+
+
+    @staticmethod
+    def getDotProduct(A: 'UnitVector', B: 'UnitVector') -> float:
+        dotProduct: float = 0.0
+        for i in range(len(A.vector)):
+            dotProduct += (A.vector[i] * B.vector[i])
+        return dotProduct
+
+
+    @staticmethod
+    def getAngleInRadians(A: 'UnitVector', B: 'UnitVector') -> float:
+        dotProduct: float = clamp(UnitVector.getDotProduct(A, B), -1.0, +1.0)
+        lengthProduct: float = A.getLength() * B.getLength()
+        angle: float = math.acos(dotProduct / lengthProduct)
+        assert (angle >= 0 and angle <= math.pi), f"angle {angle} is not in between 0 and 180 degrees"
+        return angle
+
+
+    @staticmethod
+    def getAngleInDegrees(A: 'UnitVector', B: 'UnitVector') -> float:
+        angle: float = UnitVector.getAngleInRadians(A, B)
+        return math.degrees(angle)
+
+
+def getArcLength(r: float, A: UnitVector, B: UnitVector) -> float:
+    angle = UnitVector.getAngleInRadians(A, B)
+    return r * angle
+
 
 def eularDistance(X: tuple, Y: tuple) -> float:
     distance = 0
     for i in range(len(X)):
         distance += ((X[i] - Y[i]) ** 2)
-    return sqrt(distance)
+    return math.sqrt(distance)
+
+
+def clamp(value: float, minValue: float, maxValue: float) -> float:
+    return min(max(value, minValue), maxValue)

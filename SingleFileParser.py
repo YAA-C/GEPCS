@@ -64,5 +64,6 @@ class SingleFileParser:
         columns = Fight.features
         mainDf:pd.DataFrame = pd.DataFrame(data=dfRows, columns=columns)
         savePath = os.path.join(os.path.dirname(__file__), f'DemoFiles\\csv\\{self.fileName[:-4]}-{random.randint(99999, 999999)}.csv')
-        log("Saved file CSV Output to:", savePath)
         mainDf.to_csv(savePath, index= False)
+        
+        log("Saved file CSV Output to:", savePath)
