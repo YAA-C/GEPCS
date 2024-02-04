@@ -1,7 +1,8 @@
 from .CustomDemoParser import CustomDemoParser
 from .Filters import Filters
 from .CustomMath import BezierCurve
-
+from .Contexts import StoreRoundContext
+from math import ceil
 
 class GlobalMatchContext:
     def __init__(self, parser: CustomDemoParser) -> None:
@@ -40,7 +41,7 @@ class PlayerBlindContext:
     def generatePlayerFlashedIntervals(self) -> None:
         for event in self.blindEvents:
             intervalStart: int = int(event['tick'])
-            intervalEnd: int = int(intervalStart + float(event['blind_duration']) * 128.00)
+            intervalEnd: int = int(intervalStart + ceil(float(event['blind_duration'])) * 128.00)
             interval = (intervalStart, intervalEnd)
 
             start, end = interval[0], interval[1]
@@ -59,3 +60,22 @@ class PlayerBlindContext:
             # Player not blinded at all
             return 0.00
         return self.blindTicks[tick]
+    
+
+class PlayerSmokeContext:
+    def __init__(self, parser: CustomDemoParser) -> None:
+        self.smokeEvents: list = parser.smokeEvents
+        self.smokeContext: StoreRoundContext = StoreRoundContext(parser= parser)
+        
+
+    def loadContextData(self) -> None:
+        for event in self.smokeEvents:
+            smokeStart: int = int(event['tick'])
+            smokeEnd: int = int(smokeStart + 128.0 * 18.0)
+            data = (smokeEnd, event['x'], event['y'], event['z'])
+            self.smokeContext.appendDataAtTick(smokeStart, data)
+
+
+    def getPlayerSmokeVisibility(self, tick: int, playerLocation: tuple) -> bool:
+        possibleSmokes: list = self.smokeContext.getDataOfRoundWithTick(tick)
+        # process smokes now :) (btw smoke bezier needed ?)

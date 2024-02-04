@@ -24,6 +24,7 @@ class CustomDemoParser:
         self.roundTicks: list = ()
         self.damageUtilityEvents: list = []
         self.supportUtilityEvents: list = []
+        self.smokeEvents: list = []
 
 
     def parseFile(self) -> bool:
@@ -40,6 +41,7 @@ class CustomDemoParser:
             self.fixHurtEventWeaponNames()
             self.parsePlayerBlindEvents()
             self.parsePlayerDeathEvents()
+            self.parseSmokegrenadeDetonateEvents()
             
             self.parsedDf.set_index(['tick','steamid'], inplace=True)
             self.parsedDf.sort_index(inplace= True) 
@@ -159,3 +161,8 @@ class CustomDemoParser:
     def parsePlayerDeathEvents(self) -> None:
         playerDeathEvents: list = self.parser.parse_events("player_death")
         self.deathEvents = sorted(playerDeathEvents, key=lambda x: x['tick'])
+
+    
+    def parseSmokegrenadeDetonateEvents(self) -> None:
+        smokeEvents: list = self.parser.parse_events("smokegrenade_detonate")
+        self.smokeEvents = sorted(smokeEvents, key=lambda x: x['tick'])
