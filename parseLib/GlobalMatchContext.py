@@ -1,6 +1,6 @@
 from .CustomDemoParser import CustomDemoParser
 from .Filters import Filters
-from .CustomMath import BezierCurve
+from .CustomMath import BezierCurve, interpolate, eularDistance
 from .Contexts import StoreRoundContext
 from math import ceil
 
@@ -8,6 +8,7 @@ class GlobalMatchContext:
     def __init__(self, parser: CustomDemoParser) -> None:
         self.parser: CustomDemoParser = parser
         self.playerBlindObjMap: dict(int, PlayerBlindContext) = dict()
+        self.matchSmokeObj: MatchSmokeContext = MatchSmokeContext(parser= parser)
 
 
     def loadContextData(self) -> None:
@@ -16,11 +17,16 @@ class GlobalMatchContext:
             playerBlindObj: PlayerBlindContext = PlayerBlindContext(parser= self.parser, playerSteamId= playerSteamId)
             playerBlindObj.generatePlayerFlashedIntervals()
             self.playerBlindObjMap[playerSteamId] = playerBlindObj
+        self.matchSmokeObj.loadContextData()
 
 
     def getPlayerBlindness(self, playerSteamId: int, tick: int) -> float:
         playerBlindObj: PlayerBlindContext = self.playerBlindObjMap[playerSteamId]
         return playerBlindObj.getPlayerBlindness(tick= tick)
+
+
+    def getIsSmokeBetweenPlayers(self, tick: int, playerLocationA: tuple, playerLocationB: tuple) -> bool:
+        return self.matchSmokeObj.getPlayerSmokeVisibility(tick, playerLocationA, playerLocationB)
 
 
 class PlayerBlindContext:
@@ -41,7 +47,7 @@ class PlayerBlindContext:
     def generatePlayerFlashedIntervals(self) -> None:
         for event in self.blindEvents:
             intervalStart: int = int(event['tick'])
-            intervalEnd: int = int(intervalStart + ceil(float(event['blind_duration'])) * 128.00)
+            intervalEnd: int = int(intervalStart + float(event['blind_duration']) * 128.00)
             interval = (intervalStart, intervalEnd)
 
             start, end = interval[0], interval[1]
@@ -62,7 +68,7 @@ class PlayerBlindContext:
         return self.blindTicks[tick]
     
 
-class PlayerSmokeContext:
+class MatchSmokeContext:
     def __init__(self, parser: CustomDemoParser) -> None:
         self.smokeEvents: list = parser.smokeEvents
         self.smokeContext: StoreRoundContext = StoreRoundContext(parser= parser)
@@ -76,6 +82,32 @@ class PlayerSmokeContext:
             self.smokeContext.appendDataAtTick(smokeStart, data)
 
 
-    def getPlayerSmokeVisibility(self, tick: int, playerLocation: tuple) -> bool:
+    # TODO: Check if optimizations can be done with height of triangle in 3D space
+    def getPlayerSmokeVisibility(self, tick: int, playerLocation: tuple, targetPlayerLocation: tuple) -> bool:
         possibleSmokes: list = self.smokeContext.getDataOfRoundWithTick(tick)
-        # process smokes now :) (btw smoke bezier needed ?)
+
+        for smokeData in possibleSmokes:
+            smokeX, smokeY, smokeZ = smokeData[1][1], smokeData[1][2], smokeData[1][3]
+            
+            totalDistance: int = int(ceil(eularDistance(playerLocation, targetPlayerLocation)))
+            left: int = 0
+            right: int = totalDistance
+
+            while left < right:
+                midLeft: int = (left + right) // 2
+                midX, midY, midZ = interpolate(midLeft, totalDistance, playerLocation, targetPlayerLocation)
+                distanceToSmoke1: float = eularDistance((midX, midY, midZ), (smokeX, smokeY, smokeZ))
+                
+                midRight: int = (midLeft + 1)
+                midX, midY, midZ = interpolate(midRight, totalDistance, playerLocation, targetPlayerLocation)
+                distanceToSmoke2: float = eularDistance((midX, midY, midZ), (smokeX, smokeY, smokeZ))
+
+                if distanceToSmoke1 <= 144.00 or distanceToSmoke2 <= 144.00:
+                    return True
+                
+                if distanceToSmoke1 <= distanceToSmoke2:
+                    right = midLeft
+                else:
+                    left = midLeft + 1
+
+        return False

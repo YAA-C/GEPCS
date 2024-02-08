@@ -8,6 +8,7 @@ class BezierCurve:
         self.controlPoints = controlPoints
 
 
+    @cache
     def curvePoints(self, t: float) -> tuple:
         x0, y0 = self.controlPoints[0][0], self.controlPoints[0][1]
         x1, y1 = self.controlPoints[1][0], self.controlPoints[1][1]
@@ -107,3 +108,9 @@ def eularDistance(X: tuple, Y: tuple) -> float:
 
 def clamp(value: float, minValue: float, maxValue: float) -> float:
     return min(max(value, minValue), maxValue)
+
+
+def interpolate(distanceFromA: float, totalDistance: float, positionA: tuple, positionB: float) -> float:
+    assert len(positionA) == len(positionB), f"Wrong sized vectors A: {len(positionA)} B: {len(positionB)}"
+    t: float = (distanceFromA / totalDistance)
+    return ((t * dimensionA + (1.00 - t) * dimentionB) for dimensionA, dimentionB in zip(positionA, positionB))

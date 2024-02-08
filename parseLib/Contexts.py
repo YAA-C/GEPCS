@@ -113,7 +113,8 @@ class StoreRoundContext:
 
     def getDataOfRoundWithTick(self, tick: int) -> list:
         roundIndex: int = self.findRoundIndex(tick= tick)
-        
+        '''
+        # Premature Optimization
         startIndex, endIndex = 0, len(self.roundData[roundIndex]) - 1
         left: int = 0
         right: int = len(self.roundData[roundIndex]) - 1
@@ -144,3 +145,5 @@ class StoreRoundContext:
             allData.append(self.roundData[roundIndex][i])
 
         return allData()
+        '''
+        return [data for data in self.roundData[roundIndex] if (data[0] <= tick and data[1][0] >= tick)]
