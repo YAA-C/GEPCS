@@ -52,7 +52,22 @@ class BezierCurve:
 
 
 class UnitVector:
-    def __init__(self, yaw: float, pitch: float) -> None:
+    def __init__(self, **kwargs) -> None:
+        if ('yaw' in kwargs) and ('pitch' in kwargs):
+            # using for yaw and pitch
+            yaw: float = kwargs['yaw']
+            pitch: float = kwargs['pitch']
+            self.createFromSphericalAngles(yaw, pitch)
+        elif ('fromVector' in kwargs) and ('toVector' in kwargs):
+            # using for creating vector from a vector to different vector
+            fromVector: list = kwargs['fromVector']
+            toVector: list = kwargs['toVector']
+            self.createFromCartesianCoordinates(fromVector, toVector)
+        else:
+            raise Exception("Please give appropriate arguments for constructing vector")
+
+
+    def createFromSphericalAngles(self, yaw: float, pitch: float):
         assert (yaw >= 0 and yaw <= 360), "Yaw should be between 0 and 360 degrees"
         assert (pitch >= 0 and pitch <= 180), "Pitch should be between 0 and 180 degrees"
         yaw = math.radians(yaw)
@@ -61,6 +76,13 @@ class UnitVector:
         y: float = math.sin(pitch) * math.sin(yaw)
         z: float = math.cos(pitch)
         self.vector: list = [x, y, z]
+
+
+    def createFromCartesianCoordinates(self, fromVector: list, toVector: list):
+        assert (len(fromVector) == len(toVector)), f"Both vectors should be of same length, provided {len(fromVector)}, {len(toVector)}"
+        vector = [x - y for x, y in zip(toVector, fromVector)]
+        self.vectorLength = eularDistance(vector, [0] * len(vector))
+        self.vector = [data / self.vectorLength for data in vector]
 
 
     def getLength(self) -> float:
@@ -114,3 +136,15 @@ def interpolate(distanceFromA: float, totalDistance: float, positionA: tuple, po
     assert len(positionA) == len(positionB), f"Wrong sized vectors A: {len(positionA)} B: {len(positionB)}"
     t: float = (distanceFromA / totalDistance)
     return ((t * dimensionA + (1.00 - t) * dimentionB) for dimensionA, dimentionB in zip(positionA, positionB))
+
+
+def heronsArea(sideA: float, sideB: float, sideC: float) -> float:
+    perimeterHalf: float = (sideA + sideB + sideC) / 2.00
+    area: float = math.sqrt(perimeterHalf * (perimeterHalf - sideA) * (perimeterHalf - sideB) * (perimeterHalf - sideC))
+    return area
+
+
+def heightOfTriangle(sideA: float, sideB: float, baseSide: float) -> float:
+    area: float = heronsArea(sideA, sideB, baseSide)
+    height: float = (area * 2.00) / baseSide
+    return height

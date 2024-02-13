@@ -90,7 +90,7 @@ class StoreRoundContext:
             self.roundData.append(list())
 
 
-    def findRoundIndex(self, tick: int) -> int:        
+    def findRoundIndex(self, tick: int) -> int:
         left: int = 0 
         right: int = len(self.roundTicks) - 1
         roundIndex: int = -1
@@ -114,7 +114,7 @@ class StoreRoundContext:
     def getDataOfRoundWithTick(self, tick: int) -> list:
         roundIndex: int = self.findRoundIndex(tick= tick)
         '''
-        # Premature Optimization
+        # Premature Optimization (there are only 10 smokes per round, looping over is faster)
         startIndex, endIndex = 0, len(self.roundData[roundIndex]) - 1
         left: int = 0
         right: int = len(self.roundData[roundIndex]) - 1
@@ -146,4 +146,4 @@ class StoreRoundContext:
 
         return allData()
         '''
-        return [data for data in self.roundData[roundIndex] if (data[0] <= tick and data[1][0] >= tick)]
+        return [data for data in self.roundData[roundIndex] if ((data[0] <= tick) and (tick <= data[1][0]))]

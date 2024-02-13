@@ -45,7 +45,7 @@ class Fight:
         "weaponCategory",
         "isScoping",
         "isTargetBlind", 
-        "isTargetInSmoke", 
+        "shotTargetThroughSmoke", 
         "targetReturnedDmg", 
         "Label"
     ]
@@ -99,14 +99,14 @@ class Fight:
                 "distance": distance
             })
 
-    
-    def getByIndex(self, df: pd.DataFrame, index: tuple[int, int]) -> pd.Series:
+
+    def getByIndex(self, df: pd.DataFrame, index: tuple[int, int]) -> pd.Series | None:
         if index in df.index:
             data: pd.Series | pd.DataFrame = df.loc[index]
             if type(data) == pd.Series:
                 return data
             return data.iloc[0, :]
-        return pd.Series()
+        return None
 
     
     def convertViewAngleToLinearDelta(self, circularAngle: float, angleName: str, playerCache: PlayerCache):
@@ -184,8 +184,8 @@ class Fight:
         yaw, pitch = self.getPlayerViewAngles(playerTickData= playerTickData)
         pitch += 90.0   #Pitch is in -90 to +90, we need it in 0 to 180
         distanceToTarget: float = self.precomputedDistances[self.currentDistanceIndex]["distance"]
-        prevVector: UnitVector = UnitVector(prevYaw, prevPitch)
-        curVector: UnitVector = UnitVector(yaw, pitch)
+        prevVector: UnitVector = UnitVector(yaw= prevYaw, pitch= prevPitch)
+        curVector: UnitVector = UnitVector(yaw= yaw, pitch= pitch)
         if self.precomputedDistances[self.currentDistanceIndex]["tick"] == tick:
             # completed partial arc, goto next partial arc
             self.currentDistanceIndex += 1
@@ -241,7 +241,6 @@ class Fight:
         return self.globalMatchContext.getPlayerBlindness(playerSteamId= playerSteamId, tick= tick)
 
 
-    #NOT IMPLEMENTED
     def getSmokeInVision(self, tick: int, playerLocationA: tuple, playerLocationB: tuple) -> bool:
         return self.globalMatchContext.getIsSmokeBetweenPlayers(tick, playerLocationA, playerLocationB)
 
@@ -272,17 +271,17 @@ class Fight:
             rowData[self.featureNameToIndex[featureName]] = featureValue
 
 
-    def buildFightTick(self, tick: int) -> list:
+    def buildFightTick(self, tick: int) -> list | None:
         rowData = [""] * len(Fight.features)
-        playerTickData: pd.Series = self.getByIndex(self.parser.parsedDf, (tick, self.playerSteamId))
-        if(len(playerTickData) == 0):
-            return list()   # Skipped tick
+        playerTickData: pd.Series | None = self.getByIndex(self.parser.parsedDf, (tick, self.playerSteamId))
+        if(playerTickData is None):
+            return None  # Skipped tick
         else:
             if self.minTick == -1:
                 self.minTick = tick
 
-        currentTick = tick
-        # currentTick = tick - self.minTick
+        # currentTick = tick
+        currentTick = tick - self.minTick
         X, Y, Z = self.getPlayerLocation(playerTickData= playerTickData)
         deltaX, deltaY, deltaZ = self.getLocationDeltas(playerLocation= (X, Y, Z), playerCache= self.playerDataCache)
         yaw, pitch = self.getPlayerViewAngles(playerTickData= playerTickData)
@@ -339,7 +338,7 @@ class Fight:
             self.setFeatures(rowData= rowData, featureName= "weaponCategory", featureValue= weaponCategory)
             self.setFeatures(rowData= rowData, featureName= "isScoping", featureValue= isScoping)
             self.setFeatures(rowData= rowData, featureName= "isTargetBlind", featureValue= targetBlind)
-            self.setFeatures(rowData= rowData, featureName= "isTargetInSmoke", featureValue= targetInSmoke)
+            self.setFeatures(rowData= rowData, featureName= "shotTargetThroughSmoke", featureValue= targetInSmoke)
             self.setFeatures(rowData= rowData, featureName= "targetReturnedDmg", featureValue= targetReturnedDmg)
         
         self.setFeatures(rowData= rowData, featureName= "Label", featureValue= str(self.label))
@@ -353,8 +352,8 @@ class Fight:
 
     def buildFight(self) -> None:
         for tick in range(self.intervalStartTick, self.intervalEndTick + 1):
-            rowData: list = self.buildFightTick(tick= tick)
-            if len(rowData) != 0:
+            rowData: list | None = self.buildFightTick(tick= tick)
+            if rowData is not None:
                 self.dfRows.append(rowData)
 
         self.dfRows.append([""] * len(Fight.features))

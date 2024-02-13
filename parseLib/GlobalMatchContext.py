@@ -1,13 +1,12 @@
 from .CustomDemoParser import CustomDemoParser
 from .Filters import Filters
-from .CustomMath import BezierCurve, interpolate, eularDistance
+from .CustomMath import BezierCurve, eularDistance, heightOfTriangle, UnitVector
 from .Contexts import StoreRoundContext
-from math import ceil
 
 class GlobalMatchContext:
     def __init__(self, parser: CustomDemoParser) -> None:
         self.parser: CustomDemoParser = parser
-        self.playerBlindObjMap: dict(int, PlayerBlindContext) = dict()
+        self.playerBlindObjMap: dict[int, PlayerBlindContext] = dict()
         self.matchSmokeObj: MatchSmokeContext = MatchSmokeContext(parser= parser)
 
 
@@ -82,32 +81,63 @@ class MatchSmokeContext:
             self.smokeContext.appendDataAtTick(smokeStart, data)
 
 
-    # TODO: Check if optimizations can be done with height of triangle in 3D space
+    # optimizations of getPlayerSmokeVisibility() done with height of triangle in 3D space
+    # TC: O(smokes * c)
     def getPlayerSmokeVisibility(self, tick: int, playerLocation: tuple, targetPlayerLocation: tuple) -> bool:
         possibleSmokes: list = self.smokeContext.getDataOfRoundWithTick(tick)
+        smokeRadius: float = 144.00
 
         for smokeData in possibleSmokes:
-            smokeX, smokeY, smokeZ = smokeData[1][1], smokeData[1][2], smokeData[1][3]
+            smokeLocation = (smokeData[1][1], smokeData[1][2], smokeData[1][3])
             
-            totalDistance: int = int(ceil(eularDistance(playerLocation, targetPlayerLocation)))
-            left: int = 0
-            right: int = totalDistance
+            baseDistance: float = eularDistance(playerLocation, targetPlayerLocation)
+            playerToSmokeDistance: float = eularDistance(playerLocation, smokeLocation)
+            targetPlayerToSmokeDistance: float = eularDistance(targetPlayerLocation, smokeLocation)
 
-            while left < right:
-                midLeft: int = (left + right) // 2
-                midX, midY, midZ = interpolate(midLeft, totalDistance, playerLocation, targetPlayerLocation)
-                distanceToSmoke1: float = eularDistance((midX, midY, midZ), (smokeX, smokeY, smokeZ))
-                
-                midRight: int = (midLeft + 1)
-                midX, midY, midZ = interpolate(midRight, totalDistance, playerLocation, targetPlayerLocation)
-                distanceToSmoke2: float = eularDistance((midX, midY, midZ), (smokeX, smokeY, smokeZ))
+            playerToSmokeVector: UnitVector = UnitVector(fromVector= playerLocation, toVector= smokeLocation)
+            playerToTargetVector: UnitVector = UnitVector(fromVector= playerLocation, toVector= targetPlayerLocation)
+            targetToPlayerVector: UnitVector = UnitVector(fromVector= targetPlayerLocation, toVector= playerLocation)
+            targetToSmokeVector: UnitVector = UnitVector(fromVector= targetPlayerLocation, toVector= smokeLocation)
 
-                if distanceToSmoke1 <= 144.00 or distanceToSmoke2 <= 144.00:
+            if UnitVector.getAngleInDegrees(playerToTargetVector, playerToSmokeVector) > 90.00:
+                if(playerToSmokeDistance <= smokeRadius):
+                    return True
+            elif UnitVector.getAngleInDegrees(targetToPlayerVector, targetToSmokeVector) > 90.00:
+                if(targetPlayerToSmokeDistance <= smokeRadius):
+                    return True
+            else:
+                distanceToSmoke: float = heightOfTriangle(playerToSmokeDistance, targetPlayerToSmokeDistance, baseDistance)
+                if distanceToSmoke <= smokeRadius:
                     return True
                 
-                if distanceToSmoke1 <= distanceToSmoke2:
-                    right = midLeft
-                else:
-                    left = midLeft + 1
-
         return False
+    
+
+    # TC: O(smokes * log(distance betweeen target and player))
+    # def getPlayerSmokeVisibility(self, tick: int, playerLocation: tuple, targetPlayerLocation: tuple) -> bool:
+    #     possibleSmokes: list = self.smokeContext.getDataOfRoundWithTick(tick)
+
+    #     for smokeData in possibleSmokes:
+    #         smokeX, smokeY, smokeZ = smokeData[1][1], smokeData[1][2], smokeData[1][3]
+            
+    #         totalDistance: int = int(ceil(eularDistance(playerLocation, targetPlayerLocation)))
+    #         left: int = 0
+    #         right: int = totalDistance
+
+    #         while left < right:
+    #             midLeft: int = (left + right) // 2
+    #             midX, midY, midZ = interpolate(midLeft, totalDistance, playerLocation, targetPlayerLocation)
+    #             distanceToSmoke1: float = eularDistance((midX, midY, midZ), (smokeX, smokeY, smokeZ))
+                
+    #             midRight: int = (midLeft + 1)
+    #             midX, midY, midZ = interpolate(midRight, totalDistance, playerLocation, targetPlayerLocation)
+    #             distanceToSmoke2: float = eularDistance((midX, midY, midZ), (smokeX, smokeY, smokeZ))
+
+    #             if distanceToSmoke1 <= 144.00 or distanceToSmoke2 <= 144.00:
+    #                 return True
+                
+    #             if distanceToSmoke1 <= distanceToSmoke2:
+    #                 right = midLeft
+    #             else:
+    #                 left = midLeft + 1
+    #     return False
