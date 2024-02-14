@@ -45,7 +45,7 @@ class Fight:
         "weaponCategory",
         "isScoping",
         "isTargetBlind", 
-        "isTargetInSmoke", 
+        "shotTargetThroughSmoke", 
         "targetReturnedDmg", 
         "Label"
     ]
@@ -99,14 +99,14 @@ class Fight:
                 "distance": distance
             })
 
-    
-    def getByIndex(self, df: pd.DataFrame, index: tuple[int, int]) -> pd.Series:
+
+    def getByIndex(self, df: pd.DataFrame, index: tuple[int, int]) -> pd.Series | None:
         if index in df.index:
             data: pd.Series | pd.DataFrame = df.loc[index]
             if type(data) == pd.Series:
                 return data
             return data.iloc[0, :]
-        return pd.Series()
+        return None
 
     
     def convertViewAngleToLinearDelta(self, circularAngle: float, angleName: str, playerCache: PlayerCache):
@@ -143,8 +143,8 @@ class Fight:
         return (X, Y, Z)
     
 
-    def getLocationDeltas(self, playerTickData: pd.Series, playerCache: PlayerCache) -> tuple:
-        X, Y, Z = self.getPlayerLocation(playerTickData= playerTickData)
+    def getLocationDeltas(self, playerLocation: tuple, playerCache: PlayerCache) -> tuple:
+        X, Y, Z = playerLocation[0], playerLocation[1], playerLocation[2]
         deltaX, deltaY, deltaZ = 0.0, 0.0, 0.0
 
         if('X' in playerCache.prevValueDict):
@@ -184,8 +184,8 @@ class Fight:
         yaw, pitch = self.getPlayerViewAngles(playerTickData= playerTickData)
         pitch += 90.0   #Pitch is in -90 to +90, we need it in 0 to 180
         distanceToTarget: float = self.precomputedDistances[self.currentDistanceIndex]["distance"]
-        prevVector: UnitVector = UnitVector(prevYaw, prevPitch)
-        curVector: UnitVector = UnitVector(yaw, pitch)
+        prevVector: UnitVector = UnitVector(yaw= prevYaw, pitch= prevPitch)
+        curVector: UnitVector = UnitVector(yaw= yaw, pitch= pitch)
         if self.precomputedDistances[self.currentDistanceIndex]["tick"] == tick:
             # completed partial arc, goto next partial arc
             self.currentDistanceIndex += 1
@@ -241,9 +241,8 @@ class Fight:
         return self.globalMatchContext.getPlayerBlindness(playerSteamId= playerSteamId, tick= tick)
 
 
-    #NOT IMPLEMENTED
-    def getSmokeInVision(self) -> bool:
-        return False
+    def getSmokeInVision(self, tick: int, playerLocationA: tuple, playerLocationB: tuple) -> bool:
+        return self.globalMatchContext.getIsSmokeBetweenPlayers(tick, playerLocationA, playerLocationB)
 
 
     #NOT IMPLEMENTED
@@ -272,19 +271,19 @@ class Fight:
             rowData[self.featureNameToIndex[featureName]] = featureValue
 
 
-    def buildFightTick(self, tick: int) -> list:
+    def buildFightTick(self, tick: int) -> list | None:
         rowData = [""] * len(Fight.features)
-        playerTickData: pd.Series = self.getByIndex(self.parser.parsedDf, (tick, self.playerSteamId))
-        if(len(playerTickData) == 0):
-            return list()   # Skipped tick
+        playerTickData: pd.Series | None = self.getByIndex(self.parser.parsedDf, (tick, self.playerSteamId))
+        if(playerTickData is None):
+            return None  # Skipped tick
         else:
             if self.minTick == -1:
                 self.minTick = tick
 
-        currentTick = tick
-        # currentTick = tick - self.minTick
+        # currentTick = tick
+        currentTick = tick - self.minTick
         X, Y, Z = self.getPlayerLocation(playerTickData= playerTickData)
-        deltaX, deltaY, deltaZ = self.getLocationDeltas(playerTickData= playerTickData, playerCache= self.playerDataCache)
+        deltaX, deltaY, deltaZ = self.getLocationDeltas(playerLocation= (X, Y, Z), playerCache= self.playerDataCache)
         yaw, pitch = self.getPlayerViewAngles(playerTickData= playerTickData)
         deltaYaw, deltaPitch = self.getViewAngleDeltas(playerTickData= playerTickData, playerCache= self.playerDataCache)
         deltaAimArc = self.getViewAngleDeltaAimArc(playerTickData= playerTickData, tick= tick, playerCache= self.playerDataCache)
@@ -317,7 +316,7 @@ class Fight:
             targetTickData: pd.Series = self.getByIndex(self.parser.parsedDf, (tick, targetHurtEvent["player_steamid"])) 
 
             targetX, targetY, targetZ = self.getPlayerLocation(playerTickData= targetTickData)
-            targetDeltaX, targetDeltaY, targetDeltaZ = self.getLocationDeltas(playerTickData= targetTickData, playerCache= self.targteDataCache)
+            targetDeltaX, targetDeltaY, targetDeltaZ = self.getLocationDeltas(playerLocation= (targetX, targetY, targetZ), playerCache= self.targteDataCache)
             dmgDone = self.getTargetTotalDamage(targetHurtEvent= targetHurtEvent)
             distToTarget = self.getDistanceToTarget((targetX, targetY, targetZ), (X, Y, Z))
             targetHitArea = self.getTargetHitSpot(targetHurtEvent= targetHurtEvent)
@@ -325,7 +324,7 @@ class Fight:
             weaponCategory = self.getWeaponCategory(weaponName= weaponUsed)
             isScoping = self.getPlayerScoping(playerTickData= playerTickData)
             targetBlind = self.getPlayerBlind(playerSteamId= self.targetSteamId, tick= tick)
-            targetInSmoke = self.getSmokeInVision()
+            targetInSmoke = self.getSmokeInVision(tick= tick, playerLocationA= (X, Y, Z), playerLocationB=(targetX, targetY, targetZ))
             targetReturnedDmg = self.getReturnedDamge()
 
             self.setFeatures(rowData= rowData, featureName= "targetId", featureValue= self.targetSteamId)
@@ -339,7 +338,7 @@ class Fight:
             self.setFeatures(rowData= rowData, featureName= "weaponCategory", featureValue= weaponCategory)
             self.setFeatures(rowData= rowData, featureName= "isScoping", featureValue= isScoping)
             self.setFeatures(rowData= rowData, featureName= "isTargetBlind", featureValue= targetBlind)
-            self.setFeatures(rowData= rowData, featureName= "isTargetInSmoke", featureValue= targetInSmoke)
+            self.setFeatures(rowData= rowData, featureName= "shotTargetThroughSmoke", featureValue= targetInSmoke)
             self.setFeatures(rowData= rowData, featureName= "targetReturnedDmg", featureValue= targetReturnedDmg)
         
         self.setFeatures(rowData= rowData, featureName= "Label", featureValue= str(self.label))
@@ -353,8 +352,8 @@ class Fight:
 
     def buildFight(self) -> None:
         for tick in range(self.intervalStartTick, self.intervalEndTick + 1):
-            rowData: list = self.buildFightTick(tick= tick)
-            if len(rowData) != 0:
+            rowData: list | None = self.buildFightTick(tick= tick)
+            if rowData is not None:
                 self.dfRows.append(rowData)
 
         self.dfRows.append([""] * len(Fight.features))
