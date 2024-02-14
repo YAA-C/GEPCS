@@ -8,7 +8,7 @@ class PlayerMatchContext:
         self.tickDeltaNegative: int = 128
         self.tickDeltaPositive: int = 0
         self.playerSteamId = playerSteamId
-        self.allHurtEvents: list = parser.hurtEvents
+        self.parser: CustomDemoParser = parser
         self.fireEvents = Filters().filterPlayerFireEvents(fireEvents= parser.fireEvents, playerSteamId= playerSteamId)
         self.generateWeaponFireTicks()
         self.generateDamageUtility(parser= parser)
@@ -42,7 +42,7 @@ class PlayerMatchContext:
         pass
 
 
-    def getPlayerDamageDoneTillTick(self, tick: int) -> int:
+    def getDamageToTargetDoneTillTick(self, tick: int) -> int:
         return self.playerDamageUtilityObj.getDamageDoneTillTick(tick= tick)
 
 
@@ -54,16 +54,21 @@ class PlayerMatchContext:
         return self.playerKillDeathObj.getKDRTillTick(tick= tick)
 
 
+    def getDamageToPlayerDoneTillTick(self, tick: int) -> int:
+        return self.playerHurtContext.getDamageDoneTillTick(tick= tick)
+
+
     # Changes object data per target
     def updateTarget(self, targetSteamId: int) -> None:
         self.hurtTicks = dict()
         self.hurtIntervals = []
-        self.generatePlayerHurtIntervals(targetSteamId)
+        self.generateTargetHurtIntervals(targetSteamId)
+        self.playerHurtContext: PlayerHurtContext = PlayerHurtContext(self.parser, self.playerSteamId, targetSteamId)
 
 
-    def generatePlayerHurtIntervals(self, targetSteamId: int) -> None:
+    def generateTargetHurtIntervals(self, targetSteamId: int) -> None:
         intervals: list = []
-        currentHurtEvents: list = Filters().filterPlayerHurtEvents(hurtEvents= self.allHurtEvents, playerSteamId= self.playerSteamId, targetSteamId= targetSteamId)
+        currentHurtEvents: list = Filters().filterPlayerHurtEvents(hurtEvents= self.parser.hurtEvents, playerSteamId= self.playerSteamId, targetSteamId= targetSteamId)
         for event in currentHurtEvents:
             self.hurtTicks[event['tick']] = event
             interval = (event['tick'] - self.tickDeltaNegative, event['tick'] + self.tickDeltaPositive)
@@ -89,6 +94,26 @@ class PlayerMatchContext:
                 end = max(end, intervals[i][1])
         mergedIntervals.append([start, end])
         return mergedIntervals
+    
+
+class PlayerHurtContext:
+    def __init__(self, parser: CustomDemoParser, playerSteamId: int, targetSteamId: int) -> None:
+        self.parser: CustomDemoParser = parser
+        self.playerSteamId: int = playerSteamId
+        self.targetSteamId: int = targetSteamId
+        self.roundContext: PrefixRoundContext = PrefixRoundContext(parser= parser)
+
+
+    def loadContextData(self) -> None:
+        playerHurtEvents: list = Filters().filterPlayerHurtEvents(self.parser.hurtEvents, self.targetSteamId, self.playerSteamId)
+        for event in playerHurtEvents:
+            damageDone = int(event['dmg_health']) + int(event['dmg_armor']) * 2
+            self.roundContext.appendDataAtTick(tick= int(event["tick"]), data= damageDone)
+        self.roundContext.calculatePrefixSum()
+            
+
+    def getDamageDoneTillTick(self, tick: int) -> int:
+        return self.roundContext.getDataTillTick(tick= tick)
     
 
 class PlayerDamageUtiltyContext:

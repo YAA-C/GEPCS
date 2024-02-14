@@ -87,16 +87,17 @@ class MatchSmokeContext:
         possibleSmokes: list = self.smokeContext.getDataOfRoundWithTick(tick)
         smokeRadius: float = 144.00
 
+        baseDistance: float = eularDistance(playerLocation, targetPlayerLocation)
+        playerToTargetVector: UnitVector = UnitVector(fromVector= playerLocation, toVector= targetPlayerLocation)
+        targetToPlayerVector: UnitVector = UnitVector(fromVector= targetPlayerLocation, toVector= playerLocation)
+
         for smokeData in possibleSmokes:
             smokeLocation = (smokeData[1][1], smokeData[1][2], smokeData[1][3])
             
-            baseDistance: float = eularDistance(playerLocation, targetPlayerLocation)
             playerToSmokeDistance: float = eularDistance(playerLocation, smokeLocation)
             targetPlayerToSmokeDistance: float = eularDistance(targetPlayerLocation, smokeLocation)
 
             playerToSmokeVector: UnitVector = UnitVector(fromVector= playerLocation, toVector= smokeLocation)
-            playerToTargetVector: UnitVector = UnitVector(fromVector= playerLocation, toVector= targetPlayerLocation)
-            targetToPlayerVector: UnitVector = UnitVector(fromVector= targetPlayerLocation, toVector= playerLocation)
             targetToSmokeVector: UnitVector = UnitVector(fromVector= targetPlayerLocation, toVector= smokeLocation)
 
             if UnitVector.getAngleInDegrees(playerToTargetVector, playerToSmokeVector) > 90.00:
