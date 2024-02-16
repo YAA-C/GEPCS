@@ -52,7 +52,6 @@ class PrefixRoundContext:
                 self.roundData[i][j][1] += self.roundData[i][j - 1][1]
 
 
-
 class PrefixMatchContext:
     def __init__(self) -> None:
         self.matchData: list = list()

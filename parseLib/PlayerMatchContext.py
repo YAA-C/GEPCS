@@ -64,6 +64,7 @@ class PlayerMatchContext:
         self.hurtIntervals = []
         self.generateTargetHurtIntervals(targetSteamId)
         self.playerHurtContext: PlayerHurtContext = PlayerHurtContext(self.parser, self.playerSteamId, targetSteamId)
+        self.playerHurtContext.loadContextData()
 
 
     def generateTargetHurtIntervals(self, targetSteamId: int) -> None:
@@ -105,12 +106,37 @@ class PlayerHurtContext:
 
 
     def loadContextData(self) -> None:
-        playerHurtEvents: list = Filters().filterPlayerHurtEvents(self.parser.hurtEvents, self.targetSteamId, self.playerSteamId)
-        for event in playerHurtEvents:
-            damageDone = int(event['dmg_health']) + int(event['dmg_armor']) * 2
-            self.roundContext.appendDataAtTick(tick= int(event["tick"]), data= damageDone)
-        self.roundContext.calculatePrefixSum()
+        playerWeaponHurtEvents: list = Filters().filterPlayerHurtEvents(self.parser.hurtEvents, self.targetSteamId, self.playerSteamId)
+        playerUtilityDamageEvents: list = Filters().filterPlayerHurtEvents(self.parser.damageUtilityEvents, self.targetSteamId, self.playerSteamId)
+        
+        lenLeft = len(playerWeaponHurtEvents)
+        lenRight = len(playerUtilityDamageEvents)
+        leftIndex: int = 0
+        rightIndex: int = 0
+
+        while (leftIndex < lenLeft) and (rightIndex < lenRight):
+            if playerWeaponHurtEvents[leftIndex]['tick'] < playerUtilityDamageEvents[rightIndex]['tick']:
+                self.processEvent(playerWeaponHurtEvents[leftIndex])
+                leftIndex += 1
+            else:
+                self.processEvent(playerUtilityDamageEvents[rightIndex])
+                rightIndex += 1
+
+        while (leftIndex < lenLeft):
+            self.processEvent(playerWeaponHurtEvents[leftIndex])
+            leftIndex += 1
+        
+        while (rightIndex < lenRight):
+            self.processEvent(playerUtilityDamageEvents[rightIndex])
+            rightIndex += 1
             
+        self.roundContext.calculatePrefixSum()
+        
+
+    def processEvent(self, event: dict):
+        damageDone = int(event['dmg_health']) + int(event['dmg_armor']) * 2
+        self.roundContext.appendDataAtTick(tick= int(event["tick"]), data= damageDone)
+        
 
     def getDamageDoneTillTick(self, tick: int) -> int:
         return self.roundContext.getDataTillTick(tick= tick)
