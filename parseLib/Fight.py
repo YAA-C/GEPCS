@@ -246,12 +246,12 @@ class Fight:
 
 
     #NOT IMPLEMENTED
-    def getReturnedDamge(self) -> float:
-        return 0
+    def getReturnedDamge(self, tick) -> int:
+        return self.playerMatchContextObj.getDamageToPlayerDoneTillTick(tick= tick)
     
 
     def getUtilityDamageDone(self, tick: int) -> int:
-        return self.playerMatchContextObj.getPlayerDamageDoneTillTick(tick= tick)
+        return self.playerMatchContextObj.getDamageToTargetDoneTillTick(tick= tick)
 
 
     def getSupportUtilityUsed(self, tick: int) -> int:
@@ -280,8 +280,8 @@ class Fight:
             if self.minTick == -1:
                 self.minTick = tick
 
-        # currentTick = tick
-        currentTick = tick - self.minTick
+        currentTick = tick
+        # currentTick = tick - self.minTick
         X, Y, Z = self.getPlayerLocation(playerTickData= playerTickData)
         deltaX, deltaY, deltaZ = self.getLocationDeltas(playerLocation= (X, Y, Z), playerCache= self.playerDataCache)
         yaw, pitch = self.getPlayerViewAngles(playerTickData= playerTickData)
@@ -325,7 +325,7 @@ class Fight:
             isScoping = self.getPlayerScoping(playerTickData= playerTickData)
             targetBlind = self.getPlayerBlind(playerSteamId= self.targetSteamId, tick= tick)
             targetInSmoke = self.getSmokeInVision(tick= tick, playerLocationA= (X, Y, Z), playerLocationB=(targetX, targetY, targetZ))
-            targetReturnedDmg = self.getReturnedDamge()
+            targetReturnedDmg = self.getReturnedDamge(tick= tick)
 
             self.setFeatures(rowData= rowData, featureName= "targetId", featureValue= self.targetSteamId)
             self.setFeatures(rowData= rowData, featureName= "targetName", featureValue= targetTickData["name"])
