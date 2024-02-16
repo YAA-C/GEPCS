@@ -203,9 +203,8 @@ class Fight:
         return 0
 
 
-    #NOT IMPLEMENTED
-    def getPlayerJumped(self, playerTickData: pd.Series) -> bool:
-        return False
+    def getPlayerInAir(self, playerTickData: pd.Series) -> bool:
+        return playerTickData['m_vecVelocity[2]'] != 0
     
 
     def getPlayerFiring(self, tick: int) -> bool:
@@ -292,7 +291,7 @@ class Fight:
         kdr = self.getPlayerKDR(tick= tick)
         isFlashed = self.getPlayerBlind(playerSteamId= self.playerSteamId, tick= tick)
         isCrouched = self.getPlayerCrouched(playerTickData= playerTickData)
-        isJumping = self.getPlayerJumped(playerTickData= playerTickData)
+        isJumping = self.getPlayerInAir(playerTickData= playerTickData)
         isFiring = self.getPlayerFiring(tick= tick)
         
         self.setFeatures(rowData= rowData, featureName= "currentTick", featureValue= currentTick)
