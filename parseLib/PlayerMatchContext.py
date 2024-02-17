@@ -38,10 +38,6 @@ class PlayerMatchContext:
         self.playerKillDeathObj.loadContextData()
         
 
-    def generatePlayerJumpIntervals(self) -> None:
-        pass
-
-
     def getDamageToTargetDoneTillTick(self, tick: int) -> int:
         return self.playerDamageUtilityObj.getDamageDoneTillTick(tick= tick)
 
@@ -115,7 +111,7 @@ class PlayerHurtContext:
         rightIndex: int = 0
 
         while (leftIndex < lenLeft) and (rightIndex < lenRight):
-            if playerWeaponHurtEvents[leftIndex]['tick'] < playerUtilityDamageEvents[rightIndex]['tick']:
+            if int(playerWeaponHurtEvents[leftIndex]['tick']) < int(playerUtilityDamageEvents[rightIndex]['tick']):
                 self.processEvent(playerWeaponHurtEvents[leftIndex])
                 leftIndex += 1
             else:

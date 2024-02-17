@@ -28,7 +28,7 @@ class Fight:
         "deltaAimArc",
         "isFlashed",
         "isCrouching",
-        "isJumping",
+        "isInAir",
         "utilityDmgDone", 
         "supportUtilityUsed", 
         "KDR", 
@@ -203,9 +203,8 @@ class Fight:
         return 0
 
 
-    #NOT IMPLEMENTED
-    def getPlayerJumped(self, playerTickData: pd.Series) -> bool:
-        return False
+    def getPlayerInAir(self, playerTickData: pd.Series) -> bool:
+        return float(playerTickData['m_vecVelocity[2]']) != 0
     
 
     def getPlayerFiring(self, tick: int) -> bool:
@@ -245,7 +244,6 @@ class Fight:
         return self.globalMatchContext.getIsSmokeBetweenPlayers(tick, playerLocationA, playerLocationB)
 
 
-    #NOT IMPLEMENTED
     def getReturnedDamge(self, tick) -> int:
         return self.playerMatchContextObj.getDamageToPlayerDoneTillTick(tick= tick)
     
@@ -280,8 +278,8 @@ class Fight:
             if self.minTick == -1:
                 self.minTick = tick
 
-        currentTick = tick
-        # currentTick = tick - self.minTick
+        # currentTick = tick
+        currentTick = tick - self.minTick
         X, Y, Z = self.getPlayerLocation(playerTickData= playerTickData)
         deltaX, deltaY, deltaZ = self.getLocationDeltas(playerLocation= (X, Y, Z), playerCache= self.playerDataCache)
         yaw, pitch = self.getPlayerViewAngles(playerTickData= playerTickData)
@@ -292,7 +290,7 @@ class Fight:
         kdr = self.getPlayerKDR(tick= tick)
         isFlashed = self.getPlayerBlind(playerSteamId= self.playerSteamId, tick= tick)
         isCrouched = self.getPlayerCrouched(playerTickData= playerTickData)
-        isJumping = self.getPlayerJumped(playerTickData= playerTickData)
+        isInAir = self.getPlayerInAir(playerTickData= playerTickData)
         isFiring = self.getPlayerFiring(tick= tick)
         
         self.setFeatures(rowData= rowData, featureName= "currentTick", featureValue= currentTick)
@@ -305,7 +303,7 @@ class Fight:
         self.setFeatures(rowData= rowData, featureName= "deltaAimArc", featureValue= deltaAimArc)
         self.setFeatures(rowData= rowData, featureName= "isFlashed", featureValue= isFlashed)
         self.setFeatures(rowData= rowData, featureName= "isCrouching", featureValue= isCrouched)
-        self.setFeatures(rowData= rowData, featureName= "isJumping", featureValue= isJumping)
+        self.setFeatures(rowData= rowData, featureName= "isInAir", featureValue= isInAir)
         self.setFeatures(rowData= rowData, featureName= "utilityDmgDone", featureValue= utilityDmgDone)
         self.setFeatures(rowData= rowData, featureName= "supportUtilityUsed", featureValue= supportUtilityUsed)
         self.setFeatures(rowData= rowData, featureName= "KDR", featureValue= kdr)
