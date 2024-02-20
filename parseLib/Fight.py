@@ -269,8 +269,21 @@ class Fight:
             rowData[self.featureNameToIndex[featureName]] = featureValue
 
 
+    @staticmethod
+    def getColumns(label: bool | None) -> int:
+        if label is None:
+            return Fight.features[: -1]
+        return Fight.features
+
+
+    def totalColumns(self) -> int:
+        if self.label == None:
+            return len(self.features) -1
+        return len(self.features)
+
+
     def buildFightTick(self, tick: int) -> list | None:
-        rowData = [""] * len(Fight.features)
+        rowData = [""] * self.totalColumns()
         playerTickData: pd.Series | None = self.getByIndex(self.parser.parsedDf, (tick, self.playerSteamId))
         if(playerTickData is None):
             return None  # Skipped tick
@@ -339,7 +352,8 @@ class Fight:
             self.setFeatures(rowData= rowData, featureName= "shotTargetThroughSmoke", featureValue= targetInSmoke)
             self.setFeatures(rowData= rowData, featureName= "targetReturnedDmg", featureValue= targetReturnedDmg)
         
-        self.setFeatures(rowData= rowData, featureName= "Label", featureValue= str(self.label))
+        if self.label is not None:
+            self.setFeatures(rowData= rowData, featureName= "Label", featureValue= str(self.label))
         
         # Make current values prevValues for next tick
         self.playerDataCache.update()
@@ -354,4 +368,4 @@ class Fight:
             if rowData is not None:
                 self.dfRows.append(rowData)
 
-        self.dfRows.append([""] * len(Fight.features))
+        self.dfRows.append([""] * self.totalColumns())

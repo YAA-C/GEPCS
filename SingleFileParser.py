@@ -8,16 +8,17 @@ from parseLib.Fight import Fight
 from parseLib.Logger import log
 
 class SingleFileParser:
-    def __init__(self, fileName = "test.dem"):
-        dirname = os.path.dirname(__file__)
-        self.fileName = fileName
-        self.file = os.path.join(dirname, f'DemoFiles\\Demos\\{fileName}')
-        self.parser = CustomDemoParser(targetFile = self.file)
-        result = self.parser.parseFile()
+    def __init__(self, fileName: str = "test.dem", fileVerdict: bool | None = None):
+        self.fileName: str = fileName
+        self.fileVerdict: str = fileVerdict
+        dirname: str = os.path.dirname(__file__)
+        self.file: str = os.path.join(dirname, f'DemoFiles\\Demos\\{fileName}')
+        self.parser: CustomDemoParser = CustomDemoParser(targetFile = self.file)
+        success: bool = self.parser.parseFile()
         self.globalMatchContextObj: GlobalMatchContext = GlobalMatchContext(self.parser)
         self.globalMatchContextObj.loadContextData()
 
-        if not result:
+        if not success:
             print(f"Cannot Parse : {self.file}")
             raise Exception
 
@@ -25,7 +26,7 @@ class SingleFileParser:
     def start(self):
         dfRows = []
         completedCount = 0
-        label = True
+        label = self.fileVerdict
         
         for playerSteamId in self.parser.players:
             playerTeam: str = self.parser.allPlayersTeams[playerSteamId]
@@ -61,7 +62,7 @@ class SingleFileParser:
 
         log(f"Parsed Fights:", completedCount)
 
-        columns = Fight.features
+        columns = Fight.getColumns(label= self.fileVerdict)
         mainDf:pd.DataFrame = pd.DataFrame(data=dfRows, columns=columns)
         savePath = os.path.join(os.path.dirname(__file__), f'DemoFiles\\csv\\{self.fileName[:-4]}-{random.randint(99999, 999999)}.csv')
         mainDf.to_csv(savePath, index= False)
