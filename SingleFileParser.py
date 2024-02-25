@@ -1,11 +1,12 @@
 import os
 import pandas as pd
 import random
-from parseLib.CustomDemoParser import CustomDemoParser
-from parseLib.GlobalMatchContext import GlobalMatchContext
-from parseLib.PlayerMatchContext import PlayerMatchContext
-from parseLib.Fight import Fight
-from parseLib.Logger import log
+from src.CustomDemoParser import CustomDemoParser
+from src.GlobalMatchContext import GlobalMatchContext
+from src.PlayerMatchContext import PlayerMatchContext
+from src.Fight import Fight
+from src.utils.Logger import log
+
 
 class SingleFileParser:
     def __init__(self, fileName: str = "test.dem", fileVerdict: bool | None = None):

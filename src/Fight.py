@@ -1,10 +1,10 @@
 import pandas as pd
-from .CustomMath import UnitVector, eularDistance, getArcLength
+from .utils.CustomMath import UnitVector, eularDistance, getArcLength
 from .GlobalMatchContext import GlobalMatchContext
 from .PlayerMatchContext import PlayerMatchContext
 from .CustomDemoParser import CustomDemoParser
 from .Filters import Filters
-from .Logger import logp, log
+from .utils.Logger import logp, log
 
 
 class PlayerCache:

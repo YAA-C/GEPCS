@@ -1,6 +1,6 @@
 from .CustomDemoParser import CustomDemoParser
 from .Filters import Filters
-from .CustomMath import BezierCurve, eularDistance, heightOfTriangle, UnitVector
+from .utils.CustomMath import BezierCurve, eularDistance, heightOfTriangle, UnitVector
 from .Contexts import StoreRoundContext
 
 class GlobalMatchContext:
