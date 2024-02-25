@@ -1,7 +1,7 @@
 from demoparser import DemoParser
 import pandas as pd
 import traceback
-from .Logger import log, logp
+from .utils.Logger import log, logp
 from .Filters import Filters
 
 class CustomDemoParser:

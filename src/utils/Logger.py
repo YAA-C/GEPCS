@@ -16,7 +16,7 @@ def setProcessName(_processName: str) -> None:
 
 def compileLogs(ProcessList: list) -> None:
     logLines = []
-    for processName in ProcessList:
+    for processName, _ in ProcessList:
         logFilePath = f"{LOGDIR}{processName}-log.log"
         if not os.path.isfile(logFilePath):
             # parsing stopped in the middle and this file never exists OR there are no logs for this file.
