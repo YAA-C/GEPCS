@@ -54,7 +54,7 @@ class PlayerBlindContext:
                 if tick not in self.blindTicks:
                     self.blindTicks[tick] = 0
 
-                timeRatio: float = float(tick - start) / float(end - start)
+                timeRatio: float = float(tick - start) / float(end - start + 1)
                 bezierT = self.blindBezierCurve.solveBezierCurveY(X= timeRatio)
                 _, Y = self.blindBezierCurve.curvePoints(t= bezierT)
                 self.blindTicks[tick] = max(self.blindTicks[tick], Y)
