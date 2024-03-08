@@ -21,27 +21,27 @@ def compileLogs(ProcessList: list) -> None:
         if not os.path.isfile(logFilePath):
             # parsing stopped in the middle and this file never exists OR there are no logs for this file.
             continue
-        with open(logFilePath, "r") as file:
+        with open(logFilePath, "r", encoding="utf-8") as file:
             logLines.extend(file.readlines())
         filePath = os.path.join(os.getcwd(), logFilePath)
         os.remove(filePath)
 
     logFileName = f"[{datetime.now().strftime('%m-%d-%YT%H-%M-%S')}]-run-log.log"
-    with open(f"{LOGDIR}{logFileName}", "a") as file:
+    with open(f"{LOGDIR}{logFileName}", "a", encoding="utf-8") as file:
         file.writelines(logLines)
-    print(f"Run logs at {LOGDIR}{logFileName}")
+    print(f"Run logs at {os.path.join(os.getcwd(), LOGDIR[2:-1], logFileName)}")
 
 
 def log(*msgs: object, tag: str = "INFO") -> None:
     global logFilePath
     msg = " ".join([str(ele) for ele in msgs])
     text = f"[{processName}] [{datetime.now().strftime('%H:%M:%S')}] [{tag}] {msg}\n"
-    with open(logFilePath, "a") as file:
+    with open(logFilePath, "a", encoding="utf-8") as file:
         file.write(text)
 
 
 def logp(msg: object, *, tag: str = "INFO") -> None:
     global logFilePath
     text = f"[{processName}] [{datetime.now().strftime('%H:%M:%S')}] [{tag}] \n{pformat(msg)}\n"
-    with open(logFilePath, "a") as file:
+    with open(logFilePath, "a", encoding="utf-8") as file:
         file.write(text)
